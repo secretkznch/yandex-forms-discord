@@ -30,7 +30,7 @@ app.post('/webhook', async (req, res) => {
 
     // Создаем красивое сообщение для Discord
     const embed = {
-      title: '📋 Новая заявка с Яндекс.Формы!',
+      title: '📋 Новый сейф документов!',
       color: 0xFF0000, // Красный цвет
       fields: [],
       timestamp: new Date().toISOString(),
@@ -68,7 +68,7 @@ app.post('/webhook', async (req, res) => {
 
     // Отправляем в Discord
     const discordPayload = {
-      username: 'Яндекс Формы Бот',
+      username: 'Национальная гвардия',
       embeds: [embed]
     };
 
