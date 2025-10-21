@@ -2,7 +2,10 @@ const express = require('express');
 const axios = require('axios');
 
 const app = express();
+
+// Обрабатываем оба формата: JSON и form-data
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Разрешаем запросы от Яндекс.Форм
 app.use((req, res, next) => {
@@ -19,25 +22,10 @@ app.post('/webhook', async (req, res) => {
   console.log('📦 Тело запроса:', JSON.stringify(req.body, null, 2));
   
   try {
-    // Яндекс.Формы отправляют данные в заголовках, а не в теле
-    const formData = {};
+    // Получаем данные из form-data
+    const formData = req.body;
+    console.log('📊 Данные формы:', formData);
     
-    // Собираем данные из заголовков
-    for (const [key, value] of Object.entries(req.headers)) {
-      if (key.startsWith('x-form-field-')) {
-        // Извлекаем название поля из заголовка
-        const fieldName = key.replace('x-form-field-', '');
-        formData[fieldName] = value;
-      }
-    }
-    
-    // Если нет данных в заголовках, пробуем тело
-    if (Object.keys(formData).length === 0 && req.body && Object.keys(req.body).length > 0) {
-      Object.assign(formData, req.body);
-    }
-    
-    console.log('📊 Обработанные данные формы:', formData);
-
     const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
     if (!discordWebhookUrl) {
