@@ -14,11 +14,14 @@ app.use((req, res, next) => {
 
 // Главный обработчик для Яндекс.Форм
 app.post('/webhook', async (req, res) => {
-  console.log('📨 Получена новая заявка!');
+  console.log('📨 Получен запрос от Яндекс.Формы');
+  console.log('📝 Заголовки:', JSON.stringify(req.headers, null, 2));
+  console.log('📦 Тело запроса:', JSON.stringify(req.body, null, 2));
+  console.log('🔍 Тип тела:', typeof req.body);
   
   try {
-    // Получаем данные из формы
     const formData = req.body;
+    console.log('📊 Данные формы:', formData);
     
     // Берем Discord Webhook URL из настроек
     const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
