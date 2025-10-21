@@ -18,6 +18,7 @@ app.use((req, res, next) => {
 // Функция для извлечения значений из сложной структуры Яндекс.Форм
 function extractFormData(answersData) {
   const formData = {};
+  let discordId = null;
   
   if (answersData.answer && answersData.answer.data) {
     const data = answersData.answer.data;
@@ -27,7 +28,7 @@ function extractFormData(answersData) {
       'answer_short_text_9008960333946404': '🔢 DiscordID',
       'answer_short_text_9008960334233112': '👤 Имя и Фамилия', 
       'answer_short_text_9008960334390140': '📅 Дата рождения',
-      'answer_short_text_9008960334768364': '📝 Номер паспорта',
+      'answer_short_text_9008960334768364': '💰 Сумма',
       'answer_short_text_9008960334786320': '📷 Ксерокопия документов',
       'answer_choices_9008960334810020': '💍 Семейное положение',
       'answer_choices_9008960334862248': '🏠 Тип пола',
@@ -45,6 +46,11 @@ function extractFormData(answersData) {
           fieldValue = fieldValue.map(item => item.text || item.slug || item.key).join(', ');
         }
         
+        // Сохраняем Discord ID отдельно для упоминания
+        if (fieldId === 'answer_short_text_9008960333946404') {
+          discordId = String(fieldValue).replace('@', ''); // Убираем @ если есть
+        }
+        
         // Берем человекочитаемое название или используем ID
         const fieldName = fieldMapping[fieldId] || fieldId;
         formData[fieldName] = String(fieldValue);
@@ -52,7 +58,7 @@ function extractFormData(answersData) {
     }
   }
   
-  return formData;
+  return { formData, discordId };
 }
 
 // Главный обработчик для Яндекс.Форм
@@ -61,6 +67,7 @@ app.post('/webhook', async (req, res) => {
   
   try {
     let formData = {};
+    let discordId = null;
     
     // Обрабатываем JSON-RPC формат от Яндекс.Форм
     if (req.body && req.body.params && req.body.params.answers) {
@@ -70,8 +77,11 @@ app.post('/webhook', async (req, res) => {
         console.log('📊 Ответы формы:', JSON.stringify(answersData, null, 2));
         
         // Извлекаем данные
-        formData = extractFormData(answersData);
+        const extracted = extractFormData(answersData);
+        formData = extracted.formData;
+        discordId = extracted.discordId;
         console.log('📋 Обработанные данные:', formData);
+        console.log('🆔 Discord ID для упоминания:', discordId);
         
       } catch (parseError) {
         console.error('❌ Ошибка парсинга JSON:', parseError.message);
@@ -88,6 +98,12 @@ app.post('/webhook', async (req, res) => {
     if (!discordWebhookUrl) {
       console.error('❌ Ошибка: DISCORD_WEBHOOK_URL не настроен');
       return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    // Создаем упоминание пользователя
+    let userMention = '';
+    if (discordId) {
+      userMention = `<@${discordId}>`; // Формат упоминания Discord
     }
 
     const embed = {
@@ -124,6 +140,11 @@ app.post('/webhook', async (req, res) => {
       username: 'Национальная гвардия',
       embeds: [embed]
     };
+
+    // Добавляем упоминание в content, если есть Discord ID
+    if (userMention) {
+      discordPayload.content = `👤 Пользователь: ${userMention}`;
+    }
 
     console.log('🔄 Отправляем в Discord...');
     
