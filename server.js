@@ -18,19 +18,58 @@ app.use((req, res, next) => {
 // Главный обработчик для Яндекс.Форм
 app.post('/webhook', async (req, res) => {
   console.log('📨 Получен запрос от Яндекс.Формы');
-  console.log('📝 Заголовки:', JSON.stringify(req.headers, null, 2));
-  console.log('📦 Тело запроса:', JSON.stringify(req.body, null, 2));
   
   try {
     let formData = {};
     
     // Обрабатываем JSON-RPC формат от Яндекс.Форм
-    if (req.body && req.body.params) {
-      // Это JSON-RPC запрос - берем данные из params
-      formData = req.body.params;
-      console.log('📊 Данные из JSON-RPC params:', formData);
+    if (req.body && req.body.params && req.body.params.answers) {
+      try {
+        // Парсим сложный JSON из answers
+        const answersData = JSON.parse(req.body.params.answers);
+        console.log('📊 Ответы формы:', answersData);
+        
+        // Извлекаем данные из сложной структуры
+        if (answersData.answer && answersData.answer.data) {
+          const data = answersData.answer.data;
+          
+          // Создаем понятные названия полей
+          const fieldMapping = {
+            'answer_short_text_9008960333946404': '🔢 Номер',
+            'answer_short_text_9008960334233112': '👤 Имя пользователя', 
+            'answer_short_text_9008960334390140': '📷 Фото 1',
+            'answer_short_text_9008960334768364': '💰 Сумма',
+            'answer_short_text_9008960334786320': '📷 Фото 2',
+            'answer_choices_9008960334810020': '💍 Семейное положение',
+            'answer_choices_9008960334862248': '🏠 Тип пола',
+            'answer_short_text_9008960334876588': '📞 Телефон',
+            'answer_short_text_9008960335425980': '📧 Email'
+          };
+          
+          // Преобразуем данные в понятный формат
+          for (const [key, valueObj] of Object.entries(data)) {
+            if (valueObj.value) {
+              let fieldValue = valueObj.value;
+              
+              // Обрабатываем массивы (выбор из списка)
+              if (Array.isArray(fieldValue)) {
+                fieldValue = fieldValue.map(item => item.text || item.slug || item.key).join(', ');
+              }
+              
+              const fieldName = fieldMapping[key] || key;
+              formData[fieldName] = fieldValue;
+            }
+          }
+        }
+        
+        console.log('📋 Обработанные данные:', formData);
+        
+      } catch (parseError) {
+        console.error('❌ Ошибка парсинга JSON:', parseError.message);
+        formData = { error: 'Не удалось обработать данные формы' };
+      }
     } else {
-      // Это обычный JSON запрос
+      // Обычный JSON запрос
       formData = req.body;
       console.log('📊 Данные формы:', formData);
     }
@@ -52,19 +91,13 @@ app.post('/webhook', async (req, res) => {
       }
     };
 
-    // Добавляем поля
+    // Добавляем поля в Discord сообщение
     for (const [key, value] of Object.entries(formData)) {
       if (value && value !== '' && key !== 'jsonrpc' && key !== 'id') {
-        let fieldName = key;
-        if (key === 'name') fieldName = '👤 Имя';
-        if (key === 'email') fieldName = '📧 Email';
-        if (key === 'phone') fieldName = '📞 Телефон';
-        if (key === 'message') fieldName = '💬 Сообщение';
-        
         embed.fields.push({
-          name: fieldName,
-          value: String(value),
-          inline: true
+          name: key,
+          value: String(value).substring(0, 1024), // Ограничение Discord
+          inline: key.length < 20
         });
       }
     }
@@ -72,7 +105,7 @@ app.post('/webhook', async (req, res) => {
     if (embed.fields.length === 0) {
       embed.fields.push({
         name: '⚠️ Внимание',
-        value: 'Форма отправлена, но данные отсутствуют',
+        value: 'Форма отправлена, но данные отсутствуют или не распознаны',
         inline: false
       });
     }
@@ -83,13 +116,16 @@ app.post('/webhook', async (req, res) => {
     };
 
     console.log('🔄 Отправляем в Discord...');
-    await axios.post(discordWebhookUrl, discordPayload, {
+    console.log('📤 Discord payload:', JSON.stringify(discordPayload, null, 2));
+    
+    const discordResponse = await axios.post(discordWebhookUrl, discordPayload, {
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 10000
     });
 
-    console.log('✅ Успешно отправлено в Discord!');
+    console.log('✅ Успешно отправлено в Discord! Status:', discordResponse.status);
     
     // Возвращаем правильный JSON-RPC ответ
     if (req.body && req.body.jsonrpc) {
@@ -107,6 +143,9 @@ app.post('/webhook', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Ошибка:', error.message);
+    if (error.response) {
+      console.error('📨 Ответ Discord:', error.response.data);
+    }
     
     // JSON-RPC error response
     if (req.body && req.body.jsonrpc) {
