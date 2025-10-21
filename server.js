@@ -187,5 +187,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 Webhook URL: http://localhost:${Port}/webhook`);
+  console.log(`🔗 Webhook URL: http://localhost:${PORT}/webhook`);
 });
