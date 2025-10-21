@@ -31,7 +31,7 @@ app.post('/webhook', async (req, res) => {
     // Создаем красивое сообщение для Discord
     const embed = {
       title: '📋 Новый сейф документов!',
-      color: 0xFF0000, // Красный цвет
+      color: 0x00FF00, // Зеленый цвет
       fields: [],
       timestamp: new Date().toISOString(),
       footer: {
