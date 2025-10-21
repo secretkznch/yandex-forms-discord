@@ -100,12 +100,6 @@ app.post('/webhook', async (req, res) => {
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    // Создаем упоминание пользователя
-    let userMention = '';
-    if (discordId) {
-      userMention = `<@${discordId}>`; // Формат упоминания Discord
-    }
-
     const embed = {
       title: '📋 Новый сейф документов!',
       color: 0x00FF00,
@@ -119,9 +113,16 @@ app.post('/webhook', async (req, res) => {
     // Добавляем поля в Discord сообщение
     for (const [key, value] of Object.entries(formData)) {
       if (value && value !== '') {
+        let displayValue = String(value);
+        
+        // Заменяем значение DiscordID на упоминание
+        if (key === '🔢 DiscordID' && discordId) {
+          displayValue = `<@${discordId}>`;
+        }
+        
         embed.fields.push({
           name: key,
-          value: String(value).substring(0, 1024), // Ограничение Discord
+          value: displayValue.substring(0, 1024), // Ограничение Discord
           inline: key.length < 20
         });
       }
@@ -140,11 +141,6 @@ app.post('/webhook', async (req, res) => {
       username: 'Национальная гвардия',
       embeds: [embed]
     };
-
-    // Добавляем упоминание в content, если есть Discord ID
-    if (userMention) {
-      discordPayload.content = `👤 Пользователь: ${userMention}`;
-    }
 
     console.log('🔄 Отправляем в Discord...');
     
