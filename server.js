@@ -15,6 +15,46 @@ app.use((req, res, next) => {
   next();
 });
 
+// Функция для извлечения значений из сложной структуры Яндекс.Форм
+function extractFormData(answersData) {
+  const formData = {};
+  
+  if (answersData.answer && answersData.answer.data) {
+    const data = answersData.answer.data;
+    
+    // Сопоставление ID полей с человекочитаемыми названиями
+    const fieldMapping = {
+      'answer_short_text_9008960333946404': '🔢 Номер документа',
+      'answer_short_text_9008960334233112': '👤 ФИО', 
+      'answer_short_text_9008960334390140': '📷 Фото 1',
+      'answer_short_text_9008960334768364': '💰 Сумма',
+      'answer_short_text_9008960334786320': '📷 Фото 2',
+      'answer_choices_9008960334810020': '💍 Семейное положение',
+      'answer_choices_9008960334862248': '🏠 Тип пола',
+      'answer_short_text_9008960334876588': '📞 Телефон',
+      'answer_short_text_9008960335425980': '📧 Email'
+    };
+    
+    // Обрабатываем каждое поле
+    for (const [fieldId, fieldData] of Object.entries(data)) {
+      if (fieldData.value) {
+        let fieldValue = fieldData.value;
+        
+        // Обрабатываем выбор из списка
+        if (Array.isArray(fieldValue)) {
+          fieldValue = fieldValue.map(item => item.text || item.slug || item.key).join(', ');
+        }
+        
+        // Берем человекочитаемое название или используем ID
+        const fieldName = fieldMapping[fieldId] || fieldId;
+        formData[fieldName] = String(fieldValue);
+      }
+    }
+  }
+  
+  return formData;
+}
+
 // Главный обработчик для Яндекс.Форм
 app.post('/webhook', async (req, res) => {
   console.log('📨 Получен запрос от Яндекс.Формы');
@@ -25,48 +65,17 @@ app.post('/webhook', async (req, res) => {
     // Обрабатываем JSON-RPC формат от Яндекс.Форм
     if (req.body && req.body.params && req.body.params.answers) {
       try {
-        // Парсим сложный JSON из answers
+        // Парсим JSON из answers
         const answersData = JSON.parse(req.body.params.answers);
-        console.log('📊 Ответы формы:', answersData);
+        console.log('📊 Ответы формы:', JSON.stringify(answersData, null, 2));
         
-        // Извлекаем данные из сложной структуры
-        if (answersData.answer && answersData.answer.data) {
-          const data = answersData.answer.data;
-          
-          // Создаем понятные названия полей
-          const fieldMapping = {
-            'answer_short_text_9008960333946404': '🔢 Номер',
-            'answer_short_text_9008960334233112': '👤 Имя пользователя', 
-            'answer_short_text_9008960334390140': '📷 Фото 1',
-            'answer_short_text_9008960334768364': '💰 Сумма',
-            'answer_short_text_9008960334786320': '📷 Фото 2',
-            'answer_choices_9008960334810020': '💍 Семейное положение',
-            'answer_choices_9008960334862248': '🏠 Тип пола',
-            'answer_short_text_9008960334876588': '📞 Телефон',
-            'answer_short_text_9008960335425980': '📧 Email'
-          };
-          
-          // Преобразуем данные в понятный формат
-          for (const [key, valueObj] of Object.entries(data)) {
-            if (valueObj.value) {
-              let fieldValue = valueObj.value;
-              
-              // Обрабатываем массивы (выбор из списка)
-              if (Array.isArray(fieldValue)) {
-                fieldValue = fieldValue.map(item => item.text || item.slug || item.key).join(', ');
-              }
-              
-              const fieldName = fieldMapping[key] || key;
-              formData[fieldName] = fieldValue;
-            }
-          }
-        }
-        
+        // Извлекаем данные
+        formData = extractFormData(answersData);
         console.log('📋 Обработанные данные:', formData);
         
       } catch (parseError) {
         console.error('❌ Ошибка парсинга JSON:', parseError.message);
-        formData = { error: 'Не удалось обработать данные формы' };
+        formData = { '❌ Ошибка': 'Не удалось обработать данные формы' };
       }
     } else {
       // Обычный JSON запрос
@@ -93,7 +102,7 @@ app.post('/webhook', async (req, res) => {
 
     // Добавляем поля в Discord сообщение
     for (const [key, value] of Object.entries(formData)) {
-      if (value && value !== '' && key !== 'jsonrpc' && key !== 'id') {
+      if (value && value !== '') {
         embed.fields.push({
           name: key,
           value: String(value).substring(0, 1024), // Ограничение Discord
@@ -102,10 +111,11 @@ app.post('/webhook', async (req, res) => {
       }
     }
 
+    // Если нет данных
     if (embed.fields.length === 0) {
       embed.fields.push({
         name: '⚠️ Внимание',
-        value: 'Форма отправлена, но данные отсутствуют или не распознаны',
+        value: 'Данные формы не распознаны. Проверьте настройки.',
         inline: false
       });
     }
@@ -116,16 +126,14 @@ app.post('/webhook', async (req, res) => {
     };
 
     console.log('🔄 Отправляем в Discord...');
-    console.log('📤 Discord payload:', JSON.stringify(discordPayload, null, 2));
     
     const discordResponse = await axios.post(discordWebhookUrl, discordPayload, {
       headers: {
         'Content-Type': 'application/json'
-      },
-      timeout: 10000
+      }
     });
 
-    console.log('✅ Успешно отправлено в Discord! Status:', discordResponse.status);
+    console.log('✅ Успешно отправлено в Discord!');
     
     // Возвращаем правильный JSON-RPC ответ
     if (req.body && req.body.jsonrpc) {
@@ -143,9 +151,6 @@ app.post('/webhook', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Ошибка:', error.message);
-    if (error.response) {
-      console.error('📨 Ответ Discord:', error.response.data);
-    }
     
     // JSON-RPC error response
     if (req.body && req.body.jsonrpc) {
@@ -182,5 +187,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 Webhook URL: http://localhost:${PORT}/webhook`);
+  console.log(`🔗 Webhook URL: http://localhost:${Port}/webhook`);
 });
