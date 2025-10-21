@@ -22,9 +22,18 @@ app.post('/webhook', async (req, res) => {
   console.log('📦 Тело запроса:', JSON.stringify(req.body, null, 2));
   
   try {
-    // Получаем данные из form-data
-    const formData = req.body;
-    console.log('📊 Данные формы:', formData);
+    let formData = {};
+    
+    // Обрабатываем JSON-RPC формат от Яндекс.Форм
+    if (req.body && req.body.params) {
+      // Это JSON-RPC запрос - берем данные из params
+      formData = req.body.params;
+      console.log('📊 Данные из JSON-RPC params:', formData);
+    } else {
+      // Это обычный JSON запрос
+      formData = req.body;
+      console.log('📊 Данные формы:', formData);
+    }
     
     const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
@@ -45,7 +54,7 @@ app.post('/webhook', async (req, res) => {
 
     // Добавляем поля
     for (const [key, value] of Object.entries(formData)) {
-      if (value && value !== '') {
+      if (value && value !== '' && key !== 'jsonrpc' && key !== 'id') {
         let fieldName = key;
         if (key === 'name') fieldName = '👤 Имя';
         if (key === 'email') fieldName = '📧 Email';
@@ -81,17 +90,37 @@ app.post('/webhook', async (req, res) => {
     });
 
     console.log('✅ Успешно отправлено в Discord!');
-    res.status(200).json({ 
-      status: 'success', 
-      message: 'Данные отправлены в Discord' 
-    });
+    
+    // Возвращаем правильный JSON-RPC ответ
+    if (req.body && req.body.jsonrpc) {
+      res.status(200).json({
+        jsonrpc: "2.0",
+        id: req.body.id || null,
+        result: { status: "success" }
+      });
+    } else {
+      res.status(200).json({ 
+        status: 'success', 
+        message: 'Данные отправлены в Discord' 
+      });
+    }
 
   } catch (error) {
     console.error('❌ Ошибка:', error.message);
-    res.status(500).json({ 
-      error: 'Internal Server Error',
-      details: error.message 
-    });
+    
+    // JSON-RPC error response
+    if (req.body && req.body.jsonrpc) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        id: req.body.id || null,
+        error: { message: error.message }
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Internal Server Error',
+        details: error.message 
+      });
+    }
   }
 });
 
