@@ -137,12 +137,23 @@ app.post('/webhook', async (req, res) => {
       });
     }
 
+    // ID ролей для упоминания (замени на реальные ID ролей)
+    const ROLE_IDS = {
+      ROLE_1: process.env.DISCORD_ROLE_1 || '1235694403436286064', // Первая роль
+      ROLE_2: process.env.DISCORD_ROLE_2 || '1235694409698381916'  // Вторая роль
+    };
+
+    // Создаем упоминания ролей
+    const roleMentions = `<@&${ROLE_IDS.ROLE_1}> <@&${ROLE_IDS.ROLE_2}>`;
+
     const discordPayload = {
       username: 'Национальная гвардия',
+      content: roleMentions, // Упоминание ролей в начале сообщения
       embeds: [embed]
     };
 
     console.log('🔄 Отправляем в Discord...');
+    console.log(`👥 Упоминаем роли: ${roleMentions}`);
     
     const discordResponse = await axios.post(discordWebhookUrl, discordPayload, {
       headers: {
