@@ -87,32 +87,32 @@ function extractFormData(answersData, fieldMapping) {
           let fieldValue = fieldData.value;
           const fieldName = fieldMapping[fieldId];
           
-          // Обрабатываем поле выбора (подразделение)
+          // Обрабатываем поле выбора (подразделение, семейное положение и т.д.)
           if (Array.isArray(fieldValue)) {
+            // Берем text для отображения и slug/text для определения подразделения
             fieldValue = fieldValue.map(item => {
-              // Для подразделения берем slug или text
-              if (item.slug) {
-                // Сохраняем slug для подразделения
-                if (fieldName.includes('Подразделение')) {
-                  department = item.slug;
+              const displayValue = item.text || item.slug || item.key || JSON.stringify(item);
+              
+              // Для подразделения сохраняем slug И text для поиска ролей
+              if (fieldName.includes('Подразделение')) {
+                // Пробуем сначала найти по slug, потом по text
+                if (item.slug) {
+                  department = item.slug.toLowerCase();
                   console.log(`🎯 Found Department from slug: "${department}"`);
+                } else if (item.text) {
+                  department = item.text.toLowerCase();
+                  console.log(`🎯 Found Department from text: "${department}"`);
                 }
-                return item.slug;
               }
-              return item.text || item.key || JSON.stringify(item);
+              
+              return displayValue;
             }).join(', ');
-            
-            // Если department не нашли по slug, пробуем по text
-            if (!department && fieldName.includes('Подразделение') && fieldData.value[0] && fieldData.value[0].text) {
-              department = fieldData.value[0].text.toLowerCase();
-              console.log(`🎯 Found Department from text: "${department}"`);
+          } else {
+            // Для обычных полей
+            if (fieldName.includes('DiscordID')) {
+              discordId = String(fieldValue).replace(/[@<>]/g, '');
+              console.log(`🎯 Found Discord ID: ${discordId}`);
             }
-          }
-          
-          // Сохраняем Discord ID
-          if (fieldName.includes('DiscordID')) {
-            discordId = String(fieldValue).replace(/[@<>]/g, '');
-            console.log(`🎯 Found Discord ID: ${discordId}`);
           }
           
           formData[fieldName] = String(fieldValue);
@@ -130,27 +130,27 @@ function extractFormData(answersData, fieldMapping) {
           
           // Обрабатываем разные типы полей
           if (field.choices) {
-            // Поле с выбором (select, radio)
+            // Поле с выбором (select, radio) - используем labels для отображения
             fieldValue = field.choices.labels ? field.choices.labels.join(', ') : 
                         field.choices.other || '';
+            
+            // Для подразделения сохраняем значение для поиска ролей
+            if (fieldName.includes('Подразделение')) {
+              department = fieldValue.toLowerCase();
+              console.log(`🎯 Found Department: "${department}"`);
+            }
           } else if (field.value) {
             // Текстовое поле
             fieldValue = field.value;
+            
+            // Сохраняем Discord ID
+            if (fieldName.includes('DiscordID')) {
+              discordId = String(fieldValue).replace(/[@<>]/g, '');
+              console.log(`🎯 Found Discord ID: ${discordId}`);
+            }
           } else if (field.text) {
             // Текстовое поле (альтернативный формат)
             fieldValue = field.text;
-          }
-          
-          // Сохраняем Discord ID отдельно
-          if (fieldName.includes('DiscordID')) {
-            discordId = String(fieldValue).replace(/[@<>]/g, '');
-            console.log(`🎯 Found Discord ID: ${discordId}`);
-          }
-          
-          // Сохраняем подразделение
-          if (fieldName.includes('Подразделение')) {
-            department = String(fieldValue);
-            console.log(`🎯 Found Department: "${department}"`);
           }
           
           formData[fieldName] = String(fieldValue);
@@ -180,41 +180,77 @@ function extractFormData(answersData, fieldMapping) {
   return { formData, discordId, department };
 }
 
-// Функция для получения ролей
+// Функция для получения ролей по подразделению
 function getDepartmentRoles(formType, department) {
   const config = FORM_CONFIGS[formType];
   
   console.log(`🔍 DEBUG getDepartmentRoles: formType=${formType}, department="${department}"`);
   
   if (formType === 'documents') {
+    console.log(`📝 Using default roles for documents`);
     return config.defaultRoleIds || [];
   }
   
   if (formType === 'dismissal' && department && config.departmentRoles) {
-    // Приводим department к нижнему регистру
+    // Приводим department к нижнему регистру для поиска
     const departmentLower = department.toLowerCase().trim();
     console.log(`🔍 Searching for department: "${departmentLower}"`);
-    console.log(`🔍 Available departments:`, Object.keys(config.departmentRoles));
+    console.log(`🔍 Available department keys:`, Object.keys(config.departmentRoles));
     
-    // Пробуем разные варианты поиска
-    for (const [dept, roles] of Object.entries(config.departmentRoles)) {
-      const deptLower = dept.toLowerCase();
+    // Маппинг различных вариантов названий на ключи
+    const departmentMapping = {
+      // FPF варианты
+      'fpf': 'fpf',
+      'fp force': 'fpf',
+      'force protection force': 'fpf',
+      'force protection': 'fpf',
+      '1761143419532': 'fpf', // если приходит числовой ID
       
-      // Вариант 1: точное совпадение
-      if (departmentLower === deptLower) {
-        console.log(`✅ Exact match found: ${dept}`);
-        return roles;
+      // SSF варианты
+      'ssf': 'ssf', 
+      'special security force': 'ssf',
+      'special security': 'ssf',
+      '1761143419533': 'ssf',
+      
+      // SOAR варианты
+      'soar': 'soar',
+      'special operations and response': 'soar',
+      'special operations': 'soar',
+      '1761143419534': 'soar',
+      
+      // MP варианты
+      'mp': 'mp',
+      'military police': 'mp',
+      'полиция': 'mp',
+      '1761143419536': 'mp',
+      
+      // MTA варианты
+      'mta': 'mta',
+      'military training academy': 'mta',
+      'training academy': 'mta',
+      '1761143419537': 'mta',
+      
+      // Academy варианты
+      'academy': 'academy',
+      'академия': 'academy',
+      '1761143419535': 'academy'
+    };
+    
+    // Ищем совпадение в маппинге
+    for (const [key, deptKey] of Object.entries(departmentMapping)) {
+      if (departmentLower === key.toLowerCase() || departmentLower.includes(key.toLowerCase())) {
+        console.log(`✅ Department match found: "${key}" -> ${deptKey}`);
+        const roles = config.departmentRoles[deptKey];
+        console.log(`🎯 Roles for ${deptKey}:`, roles);
+        return roles || config.defaultRoleIds;
       }
-      
-      // Вариант 2: содержится в строке
-      if (departmentLower.includes(deptLower)) {
-        console.log(`✅ Partial match found: ${dept} in ${departmentLower}`);
-        return roles;
-      }
-      
-      // Вариант 3: проверяем числовые значения (если department это число)
-      if (!isNaN(departmentLower) && deptLower === departmentLower) {
-        console.log(`✅ Numeric match found: ${dept}`);
+    }
+    
+    // Если не нашли в маппинге, пробуем прямые ключи
+    for (const [deptKey, roles] of Object.entries(config.departmentRoles)) {
+      if (departmentLower === deptKey.toLowerCase() || departmentLower.includes(deptKey.toLowerCase())) {
+        console.log(`✅ Direct department match: ${deptKey}`);
+        console.log(`🎯 Roles for ${deptKey}:`, roles);
         return roles;
       }
     }
@@ -381,6 +417,8 @@ function createFormHandler(formType) {
       const roleIds = getDepartmentRoles(formType, department);
       const roleMentions = roleIds.filter(roleId => roleId).map(roleId => `<@&${roleId}>`).join(' ');
 
+      console.log(`👥 Final role mentions: ${roleMentions}`);
+
       const discordPayload = {
         username: config.username,
         content: roleMentions || 'Новая заявка!',
@@ -445,7 +483,7 @@ app.post('/webhook', createFormHandler('documents'));
 app.get('/', (req, res) => {
   res.json({ 
     status: 'OK 👍', 
-    service: 'Яндекс.Формы → Discord',
+    service: 'Разработчик @secretkznch',
     endpoints: {
       documents: '/webhook/documents',
       dismissal: '/webhook/dismissal',
