@@ -204,31 +204,31 @@ function getDepartmentRoles(formType, department) {
       'fp force': 'fpf',
       'force protection force': 'fpf',
       'force protection': 'fpf',
-      '1761143419532': 'fpf', // если приходит числовой ID
+      '9008960389129250': 'fpf', // если приходит числовой ID
       
       // SSF варианты
       'ssf': 'ssf', 
       'special security force': 'ssf',
       'special security': 'ssf',
-      '1761143419533': 'ssf',
+      '1761143395395': 'ssf',
       
       // SOAR варианты
       'soar': 'soar',
       'special operations and response': 'soar',
       'special operations': 'soar',
-      '1761143419534': 'soar',
+      '1761143401382': 'soar',
       
       // MP варианты
       'mp': 'mp',
       'military police': 'mp',
       'полиция': 'mp',
-      '1761143419536': 'mp',
+      '1761143405371': 'mp',
       
       // MTA варианты
       'mta': 'mta',
       'military training academy': 'mta',
       'training academy': 'mta',
-      '1761143419537': 'mta',
+      '1761143410900': 'mta',
       
       // Academy варианты
       'academy': 'academy',
