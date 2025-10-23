@@ -75,9 +75,53 @@ function extractFormData(answersData, fieldMapping) {
   console.log('🔍 RAW answersData:', JSON.stringify(answersData, null, 2));
   
   try {
-    // Формат Яндекс.Форм: answersData содержит массив полей
-    if (Array.isArray(answersData)) {
-      console.log('📝 Detected array format (new Yandex Forms)');
+    // Обрабатываем структуру Яндекс.Форм с answer.data
+    if (answersData.answer && answersData.answer.data) {
+      console.log('📝 Detected Yandex Forms structure with answer.data');
+      const data = answersData.answer.data;
+      
+      for (const [fieldId, fieldData] of Object.entries(data)) {
+        console.log(`🔍 Processing field ${fieldId}:`, fieldData);
+        
+        if (fieldData.value && fieldMapping[fieldId]) {
+          let fieldValue = fieldData.value;
+          const fieldName = fieldMapping[fieldId];
+          
+          // Обрабатываем поле выбора (подразделение)
+          if (Array.isArray(fieldValue)) {
+            fieldValue = fieldValue.map(item => {
+              // Для подразделения берем slug или text
+              if (item.slug) {
+                // Сохраняем slug для подразделения
+                if (fieldName.includes('Подразделение')) {
+                  department = item.slug;
+                  console.log(`🎯 Found Department from slug: "${department}"`);
+                }
+                return item.slug;
+              }
+              return item.text || item.key || JSON.stringify(item);
+            }).join(', ');
+            
+            // Если department не нашли по slug, пробуем по text
+            if (!department && fieldName.includes('Подразделение') && fieldData.value[0] && fieldData.value[0].text) {
+              department = fieldData.value[0].text.toLowerCase();
+              console.log(`🎯 Found Department from text: "${department}"`);
+            }
+          }
+          
+          // Сохраняем Discord ID
+          if (fieldName.includes('DiscordID')) {
+            discordId = String(fieldValue).replace(/[@<>]/g, '');
+            console.log(`🎯 Found Discord ID: ${discordId}`);
+          }
+          
+          formData[fieldName] = String(fieldValue);
+        }
+      }
+    }
+    // Формат с массивом полей
+    else if (Array.isArray(answersData)) {
+      console.log('📝 Detected array format');
       
       for (const field of answersData) {
         if (field && field.id && fieldMapping[field.id]) {
@@ -106,37 +150,12 @@ function extractFormData(answersData, fieldMapping) {
           // Сохраняем подразделение
           if (fieldName.includes('Подразделение')) {
             department = String(fieldValue);
-            console.log(`🎯 Found Department: ${department}`);
+            console.log(`🎯 Found Department: "${department}"`);
           }
           
           formData[fieldName] = String(fieldValue);
         } else if (field && field.id) {
           console.log(`⚠️ Unknown field ID: ${field.id}`);
-        }
-      }
-    } 
-    // Старый формат (вложенная структура)
-    else if (answersData.answer && answersData.answer.data) {
-      console.log('📝 Detected old nested format');
-      const data = answersData.answer.data;
-      
-      for (const [fieldId, fieldData] of Object.entries(data)) {
-        if (fieldData.value && fieldMapping[fieldId]) {
-          let fieldValue = fieldData.value;
-          
-          if (Array.isArray(fieldValue)) {
-            fieldValue = fieldValue.map(item => item.text || item.slug || item.key).join(', ');
-            if (fieldData.value[0] && fieldData.value[0].slug) {
-              department = fieldData.value[0].slug;
-            }
-          }
-          
-          const fieldName = fieldMapping[fieldId];
-          if (fieldName.includes('DiscordID')) {
-            discordId = String(fieldValue).replace(/[@<>]/g, '');
-          }
-          
-          formData[fieldName] = String(fieldValue);
         }
       }
     }
@@ -156,6 +175,8 @@ function extractFormData(answersData, fieldMapping) {
   }
   
   console.log('📋 Extracted formData:', formData);
+  console.log('🎯 Department for roles:', department);
+  console.log('🆔 Discord ID:', discordId);
   return { formData, discordId, department };
 }
 
@@ -163,18 +184,45 @@ function extractFormData(answersData, fieldMapping) {
 function getDepartmentRoles(formType, department) {
   const config = FORM_CONFIGS[formType];
   
+  console.log(`🔍 DEBUG getDepartmentRoles: formType=${formType}, department="${department}"`);
+  
   if (formType === 'documents') {
     return config.defaultRoleIds || [];
   }
   
   if (formType === 'dismissal' && department && config.departmentRoles) {
+    // Приводим department к нижнему регистру
+    const departmentLower = department.toLowerCase().trim();
+    console.log(`🔍 Searching for department: "${departmentLower}"`);
+    console.log(`🔍 Available departments:`, Object.keys(config.departmentRoles));
+    
+    // Пробуем разные варианты поиска
     for (const [dept, roles] of Object.entries(config.departmentRoles)) {
-      if (department.toLowerCase().includes(dept.toLowerCase())) {
+      const deptLower = dept.toLowerCase();
+      
+      // Вариант 1: точное совпадение
+      if (departmentLower === deptLower) {
+        console.log(`✅ Exact match found: ${dept}`);
+        return roles;
+      }
+      
+      // Вариант 2: содержится в строке
+      if (departmentLower.includes(deptLower)) {
+        console.log(`✅ Partial match found: ${dept} in ${departmentLower}`);
+        return roles;
+      }
+      
+      // Вариант 3: проверяем числовые значения (если department это число)
+      if (!isNaN(departmentLower) && deptLower === departmentLower) {
+        console.log(`✅ Numeric match found: ${dept}`);
         return roles;
       }
     }
+    
+    console.log(`❌ No department match found for: "${departmentLower}"`);
   }
   
+  console.log(`⚙️ Using default roles:`, config.defaultRoleIds);
   return config.defaultRoleIds || [];
 }
 
@@ -258,6 +306,12 @@ function createFormHandler(formType) {
         formData = { '❌ Ошибка': 'Пустой запрос или неизвестный формат данных' };
       }
 
+      // ОТЛАДКА ПОСЛЕ ИЗВЛЕЧЕНИЯ ДАННЫХ
+      console.log('🎯 FINAL VALUES:');
+      console.log('   - Department:', department);
+      console.log('   - Discord ID:', discordId);
+      console.log('   - Form Data keys:', Object.keys(formData));
+
       // Временно: если данные пустые, показываем сырые данные для отладки
       if (Object.keys(formData).length === 0 && req.body && req.body.params && req.body.params[""]) {
         console.log('⚠️ No data extracted, showing raw data for debugging');
@@ -289,7 +343,7 @@ function createFormHandler(formType) {
         }
       }
 
-      // Остальной код без изменений...
+      // Создаем Discord embed
       const embed = {
         title: config.title,
         color: formType === 'dismissal' ? 0xFF0000 : 0x00FF00,
