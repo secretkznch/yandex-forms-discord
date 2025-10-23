@@ -183,7 +183,6 @@ function createFormHandler(formType) {
   return async (req, res) => {
     console.log(`\n📨 ===== НОВЫЙ ЗАПРОС ОТ ФОРМЫ (${formType}) =====`);
     console.log('🔍 Method:', req.method);
-    console.log('🔍 Headers:', req.headers);
     console.log('🔍 Full request body:', JSON.stringify(req.body, null, 2));
     
     const config = FORM_CONFIGS[formType];
@@ -204,8 +203,32 @@ function createFormHandler(formType) {
       let discordId = null;
       let department = null;
       
-      // Обрабатываем разные форматы запросов от Яндекс.Форм
-      if (req.body && req.body.params && req.body.params.answers) {
+      // Обрабатываем СЛОЖНЫЙ формат Яндекс.Форм (с пустым ключом в params)
+      if (req.body && req.body.params && req.body.params[""]) {
+        console.log('📝 Detected Yandex Forms format with empty key');
+        try {
+          const answersData = typeof req.body.params[""] === 'string' 
+            ? JSON.parse(req.body.params[""]) 
+            : req.body.params[""];
+          
+          console.log('📊 Parsed answers data:', JSON.stringify(answersData, null, 2));
+          
+          // Извлекаем данные из правильной структуры
+          if (answersData.answer && answersData.answer.data) {
+            const extracted = extractFormData(answersData, config.fieldMapping);
+            formData = extracted.formData;
+            discordId = extracted.discordId;
+            department = extracted.department;
+          } else {
+            console.log('❌ Unexpected answers data structure');
+          }
+          
+        } catch (parseError) {
+          console.error('❌ JSON parsing error:', parseError.message);
+        }
+      }
+      // Старый формат (для обратной совместимости)
+      else if (req.body && req.body.params && req.body.params.answers) {
         console.log('📝 Detected JSON-RPC format with answers param');
         try {
           const answersData = typeof req.body.params.answers === 'string' 
@@ -221,11 +244,6 @@ function createFormHandler(formType) {
           
         } catch (parseError) {
           console.error('❌ JSON parsing error:', parseError.message);
-          // Пробуем обработать как прямой объект
-          const extracted = extractFormData(req.body.params.answers, config.fieldMapping);
-          formData = extracted.formData;
-          discordId = extracted.discordId;
-          department = extracted.department;
         }
       } 
       // Прямой JSON (для тестов)
@@ -241,18 +259,37 @@ function createFormHandler(formType) {
       }
 
       // Временно: если данные пустые, показываем сырые данные для отладки
-      if (Object.keys(formData).length === 0 && req.body && req.body.params && req.body.params.answers) {
+      if (Object.keys(formData).length === 0 && req.body && req.body.params && req.body.params[""]) {
         console.log('⚠️ No data extracted, showing raw data for debugging');
-        const rawData = typeof req.body.params.answers === 'string' 
-          ? JSON.parse(req.body.params.answers) 
-          : req.body.params.answers;
+        const rawData = typeof req.body.params[""] === 'string' 
+          ? JSON.parse(req.body.params[""]) 
+          : req.body.params[""];
         
+        // Показываем структуру для отладки
         formData = {
-          '🔍 RAW Data for Debug': JSON.stringify(rawData).substring(0, 1000) + '...'
+          '🔍 DEBUG - Raw Structure': 'Showing data structure for debugging',
+          '📊 ID': rawData.id || 'N/A',
+          '📋 Survey ID': rawData.survey_id || 'N/A'
         };
+        
+        // Добавляем поля если они есть
+        if (rawData.answer && rawData.answer.data) {
+          for (const [fieldId, fieldData] of Object.entries(rawData.answer.data)) {
+            if (fieldData.value) {
+              const fieldName = config.fieldMapping[fieldId] || fieldId;
+              let fieldValue = fieldData.value;
+              
+              if (Array.isArray(fieldValue)) {
+                fieldValue = fieldValue.map(item => item.text || item.slug || item.key).join(', ');
+              }
+              
+              formData[fieldName] = String(fieldValue);
+            }
+          }
+        }
       }
 
-      // Создаем Discord embed
+      // Остальной код без изменений...
       const embed = {
         title: config.title,
         color: formType === 'dismissal' ? 0xFF0000 : 0x00FF00,
