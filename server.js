@@ -68,7 +68,7 @@ const FORM_CONFIGS = {
   'gentoken': {
     webhookUrl: process.env.DISCORD_WEBHOOK_GENTOKEN,
     title: 'Новый жетон',
-    username: 'Генеральский Штаб SANG'
+    username: 'Генеральский Штаб SANG',
     defaultRoleIds: [], // пустой массив для сообщении без упоминаний ролей
     fieldMapping: {
       'answer_short_text_9008960646964800': '🔢 DiscordI',
@@ -490,6 +490,7 @@ function createFormHandler(formType) {
 app.post('/webhook/documents', createFormHandler('documents'));
 app.post('/webhook/dismissal', createFormHandler('dismissal'));
 app.post('/webhook', createFormHandler('documents'));
+app.post('/webhook', createFormHandler('gentoken'));
 
 // Страница проверки работы
 app.get('/', (req, res) => {
@@ -499,11 +500,13 @@ app.get('/', (req, res) => {
     endpoints: {
       documents: '/webhook/documents',
       dismissal: '/webhook/dismissal',
+      gentoken: '/webhook/gentoken',
       legacy: '/webhook'
     },
     environment: {
       hasDocumentsWebhook: !!process.env.DISCORD_WEBHOOK_DOCUMENTS,
-      hasDismissalWebhook: !!process.env.DISCORD_WEBHOOK_DISMISSAL
+      hasDismissalWebhook: !!process.env.DISCORD_WEBHOOK_DISMISSAL,
+      hasGentokenWebhook: !!process.env.DISCORD_WEBHOOK_GENTOKEN
     }
   });
 });
@@ -527,7 +530,9 @@ app.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 Webhook для документов: http://localhost:${PORT}/webhook/documents`);
   console.log(`🔗 Webhook для увольнений: http://localhost:${PORT}/webhook/dismissal`);
+  console.log(`🔗 Webhook для генеральских жетонов: http://localhost:${PORT}/webhook/gentoken`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_GENTOKEN: ${process.env.DISCORD_WEBHOOK_GENTOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
