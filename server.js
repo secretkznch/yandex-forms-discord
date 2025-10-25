@@ -434,7 +434,7 @@ function createFormHandler(formType) {
 
       const discordPayload = {
         username: config.username,
-        content: roleMentions || 'Новая заявка!',
+        content: roleMentions || ' ',
         embeds: [embed]
       };
 
