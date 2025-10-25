@@ -75,8 +75,9 @@ const FORM_CONFIGS = {
       'answer_short_text_9008960646979296': '👤 Имя и Фамилия',
       'answer_short_text_9008960647009660': '👨🏻‍✈️ Должность',
       'answer_short_text_9008960647031964': '🎫 Жетон'
+    }
   }
-},
+};
 
 // Улучшенная функция для извлечения значений из Яндекс.Форм
 function extractFormData(answersData, fieldMapping) {
@@ -489,8 +490,8 @@ function createFormHandler(formType) {
 // Регистрируем эндпоинты
 app.post('/webhook/documents', createFormHandler('documents'));
 app.post('/webhook/dismissal', createFormHandler('dismissal'));
-app.post('/webhook', createFormHandler('documents'));
-app.post('/webhook', createFormHandler('gentoken'));
+app.post('/webhook/gentoken', createFormHandler('gentoken'));
+app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
 app.get('/', (req, res) => {
