@@ -98,15 +98,7 @@ const FORM_CONFIGS = {
     webhookUrl: process.env.DISCORD_WEBHOOK_PEREVOD_1,
     title: '📑 Разрешение на перевод',
     username: 'Отдел кадров',
-    departmentFieldId: 'answer_choices_9008961512180258',
-    departmentRoles: {
-      'fpf': [process.env.DISCORD_ROLE_FPF_1],
-      'ssf': [process.env.DISCORD_ROLE_SSF_1],
-      'soar': [process.env.DISCORD_ROLE_SOAR_1],
-      'mp': [process.env.DISCORD_ROLE_MP_1],
-      'mta': [process.env.DISCORD_ROLE_MTA_1],
-    },
-    departmentFieldId: 'answer_choices_9008961518712384',
+    departmentFieldId: 'answer_choices_9008961512180258', 'answer_choices_9008961518712384',
     departmentRoles: {
       'fpf': [process.env.DISCORD_ROLE_FPF_1],
       'ssf': [process.env.DISCORD_ROLE_SSF_1],
