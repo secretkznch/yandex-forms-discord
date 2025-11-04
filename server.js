@@ -507,6 +507,7 @@ function createFormHandler(formType) {
 app.post('/webhook/documents', createFormHandler('documents'));
 app.post('/webhook/dismissal', createFormHandler('dismissal'));
 app.post('/webhook/gentoken', createFormHandler('gentoken'));
+app.post('/webhook/voennik', createFormHandler('voennik'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -518,12 +519,14 @@ app.get('/', (req, res) => {
       documents: '/webhook/documents',
       dismissal: '/webhook/dismissal',
       gentoken: '/webhook/gentoken',
+      voennik: '/webhook/voennik',
       legacy: '/webhook'
     },
     environment: {
       hasDocumentsWebhook: !!process.env.DISCORD_WEBHOOK_DOCUMENTS,
       hasDismissalWebhook: !!process.env.DISCORD_WEBHOOK_DISMISSAL,
-      hasGentokenWebhook: !!process.env.DISCORD_WEBHOOK_GENTOKEN
+      hasGentokenWebhook: !!process.env.DISCORD_WEBHOOK_GENTOKEN,
+      hasVoennikWebhook: !!process.env.DISCORD_WEBHOOK_VOENNIK
     }
   });
 });
@@ -548,8 +551,10 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook для документов: http://localhost:${PORT}/webhook/documents`);
   console.log(`🔗 Webhook для увольнений: http://localhost:${PORT}/webhook/dismissal`);
   console.log(`🔗 Webhook для генеральских жетонов: http://localhost:${PORT}/webhook/gentoken`);
+  console.log(`🔗 Webhook военных билетов: http://localhost:${PORT}/webhook/voennik`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_GENTOKEN: ${process.env.DISCORD_WEBHOOK_GENTOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_VOENNIK: ${process.env.DISCORD_WEBHOOK_VOENNIK ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
