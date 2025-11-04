@@ -130,30 +130,39 @@ function findDepartmentRoles(department, departmentRoles) {
     'force protection force': 'fpf',
     'force protection': 'fpf',
     '9008960389129250': 'fpf',
-    
+    '9008961512180268': 'fpf',
+    '9008961518712394': 'fpf',
     // SSF варианты
     'ssf': 'ssf', 
     'special security force': 'ssf',
     'special security': 'ssf',
     '1761143395395': 'ssf',
+    '1762257457073': 'ssf',
+    '1762263994604': 'ssf',
     
     // SOAR варианты
     'soar': 'soar',
     'special operations and response': 'soar',
     'special operations': 'soar',
     '1761143401382': 'soar',
+    '1762257452943': 'soar',
+    '1762263990062': 'soar',
     
     // MP варианты
     'mp': 'mp',
     'military police': 'mp',
     'полиция': 'mp',
     '1761143405371': 'mp',
+    '1762257448656': 'mp',
+    '1762263986487': 'mp',
     
     // MTA варианты
     'mta': 'mta',
     'military training academy': 'mta',
     'training academy': 'mta',
-    '1761143410900': 'mta'
+    '1761143410900': 'mta',
+    '1762257460087': 'mta',
+    '1762263997367': 'mta',
   };
   
   // Ищем совпадение в маппинге
