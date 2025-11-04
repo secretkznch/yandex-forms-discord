@@ -1,4 +1,4 @@
-    const express = require('express');
+const express = require('express');
 const axios = require('axios');
 
 const app = express();
@@ -94,11 +94,14 @@ const FORM_CONFIGS = {
     }
   },
   // Разрешение на перевод
-  'dismissal': {
-    webhookUrl: process.env.DISCORD_WEBHOOK_PEREVOD_1,
+  'razrperevod': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
     title: '📑 Разрешение на перевод',
     username: 'Отдел кадров',
-    departmentFieldId: 'answer_choices_9008961512180258', 'answer_choices_9008961518712384',
+    departmentFields: {
+      current: 'answer_choices_9008961512180258',    // Текущее подразделение
+      desired: 'answer_choices_9008961518712384'     // Желаемое подразделение
+    },
     departmentRoles: {
       'fpf': [process.env.DISCORD_ROLE_FPF_1],
       'ssf': [process.env.DISCORD_ROLE_SSF_1],
@@ -112,17 +115,136 @@ const FORM_CONFIGS = {
       'answer_short_text_9008961503405112': '👤 Имя и фамилия',
       'answer_short_text_9008961503423628': '👨🏻‍✈️ Воинское звание',
       'answer_choices_9008961512180258': '🏢 Текущее подразделение',
-      'answer_choices_9008961518712384': '🏢 Желаемое подразделение',
-      'answer_short_text_9008961512272368': '📋 Причина желания перевода'
+      'answer_choices_9008961518712384': '🎯 Желаемое подразделение',
+      'answer_short_text_9008961512272368': '📋 Причина перевода'
     }
   },
 };
+
+// Вспомогательная функция для поиска ролей подразделения
+function findDepartmentRoles(department, departmentRoles) {
+  const departmentMapping = {
+    // FPF варианты
+    'fpf': 'fpf',
+    'fp force': 'fpf',
+    'force protection force': 'fpf',
+    'force protection': 'fpf',
+    '9008960389129250': 'fpf',
+    
+    // SSF варианты
+    'ssf': 'ssf', 
+    'special security force': 'ssf',
+    'special security': 'ssf',
+    '1761143395395': 'ssf',
+    
+    // SOAR варианты
+    'soar': 'soar',
+    'special operations and response': 'soar',
+    'special operations': 'soar',
+    '1761143401382': 'soar',
+    
+    // MP варианты
+    'mp': 'mp',
+    'military police': 'mp',
+    'полиция': 'mp',
+    '1761143405371': 'mp',
+    
+    // MTA варианты
+    'mta': 'mta',
+    'military training academy': 'mta',
+    'training academy': 'mta',
+    '1761143410900': 'mta'
+  };
+  
+  // Ищем совпадение в маппинге
+  for (const [key, deptKey] of Object.entries(departmentMapping)) {
+    if (department === key.toLowerCase() || department.includes(key.toLowerCase())) {
+      console.log(`✅ Department match found: "${key}" -> ${deptKey}`);
+      const roles = departmentRoles[deptKey];
+      console.log(`🎯 Roles for ${deptKey}:`, roles);
+      return roles || [];
+    }
+  }
+  
+  // Если не нашли в маппинге, пробуем прямые ключи
+  for (const [deptKey, roles] of Object.entries(departmentRoles)) {
+    if (department === deptKey.toLowerCase() || department.includes(deptKey.toLowerCase())) {
+      console.log(`✅ Direct department match: ${deptKey}`);
+      console.log(`🎯 Roles for ${deptKey}:`, roles);
+      return roles;
+    }
+  }
+  
+  console.log(`❌ No department match found for: "${department}"`);
+  return [];
+}
+
+// Функция для получения ролей по подразделению
+function getDepartmentRoles(formType, department, currentDepartment = null, desiredDepartment = null) {
+  const config = FORM_CONFIGS[formType];
+  
+  console.log(`🔍 DEBUG getDepartmentRoles: formType=${formType}, department="${department}", current="${currentDepartment}", desired="${desiredDepartment}"`);
+  
+  // ОСОБАЯ ЛОГИКА ДЛЯ ФОРМЫ ПЕРЕВОДА: используем ОБА подразделения
+  if (formType === 'razrperevod' && config.departmentRoles) {
+    const roles = [];
+    
+    // Добавляем роль текущего подразделения
+    if (currentDepartment) {
+      const currentDeptLower = currentDepartment.toLowerCase().trim();
+      console.log(`🔍 Searching for CURRENT department: "${currentDeptLower}"`);
+      
+      const currentRoles = findDepartmentRoles(currentDeptLower, config.departmentRoles);
+      if (currentRoles.length > 0) {
+        console.log(`✅ Added CURRENT department roles:`, currentRoles);
+        roles.push(...currentRoles);
+      }
+    }
+    
+    // Добавляем роль желаемого подразделения
+    if (desiredDepartment) {
+      const desiredDeptLower = desiredDepartment.toLowerCase().trim();
+      console.log(`🔍 Searching for DESIRED department: "${desiredDeptLower}"`);
+      
+      const desiredRoles = findDepartmentRoles(desiredDeptLower, config.departmentRoles);
+      if (desiredRoles.length > 0) {
+        console.log(`✅ Added DESIRED department roles:`, desiredRoles);
+        roles.push(...desiredRoles);
+      }
+    }
+    
+    // Убираем дубликаты
+    const uniqueRoles = [...new Set(roles)];
+    console.log(`🎯 Final unique roles for transfer:`, uniqueRoles);
+    
+    return uniqueRoles.length > 0 ? uniqueRoles : config.defaultRoleIds;
+  }
+  
+  // Старая логика для других форм
+  if (formType === 'documents') {
+    console.log(`📝 Using default roles for documents`);
+    return config.defaultRoleIds || [];
+  }
+  
+  if (formType === 'dismissal' && department && config.departmentRoles) {
+    const departmentLower = department.toLowerCase().trim();
+    console.log(`🔍 Searching for department: "${departmentLower}"`);
+    
+    const roles = findDepartmentRoles(departmentLower, config.departmentRoles);
+    return roles.length > 0 ? roles : config.defaultRoleIds;
+  }
+  
+  console.log(`⚙️ Using default roles:`, config.defaultRoleIds);
+  return config.defaultRoleIds || [];
+}
 
 // Улучшенная функция для извлечения значений из Яндекс.Форм
 function extractFormData(answersData, fieldMapping) {
   const formData = {};
   let discordId = null;
   let department = null;
+  let currentDepartment = null;
+  let desiredDepartment = null;
   
   console.log('🔍 RAW answersData:', JSON.stringify(answersData, null, 2));
   
@@ -154,6 +276,27 @@ function extractFormData(answersData, fieldMapping) {
                 } else if (item.text) {
                   department = item.text.toLowerCase();
                   console.log(`🎯 Found Department from text: "${department}"`);
+                }
+              }
+
+              // СОХРАНЯЕМ ОБА ПОДРАЗДЕЛЕНИЯ ДЛЯ ФОРМЫ ПЕРЕВОДА
+              if (fieldName.includes('Текущее подразделение')) {
+                if (item.slug) {
+                  currentDepartment = item.slug.toLowerCase();
+                  console.log(`🎯 Found CURRENT Department from slug: "${currentDepartment}"`);
+                } else if (item.text) {
+                  currentDepartment = item.text.toLowerCase();
+                  console.log(`🎯 Found CURRENT Department from text: "${currentDepartment}"`);
+                }
+              }
+
+              if (fieldName.includes('Желаемое подразделение')) {
+                if (item.slug) {
+                  desiredDepartment = item.slug.toLowerCase();
+                  console.log(`🎯 Found DESIRED Department from slug: "${desiredDepartment}"`);
+                } else if (item.text) {
+                  desiredDepartment = item.text.toLowerCase();
+                  console.log(`🎯 Found DESIRED Department from text: "${desiredDepartment}"`);
                 }
               }
               
@@ -190,6 +333,17 @@ function extractFormData(answersData, fieldMapping) {
             if (fieldName.includes('Подразделение')) {
               department = fieldValue.toLowerCase();
               console.log(`🎯 Found Department: "${department}"`);
+            }
+
+            // СОХРАНЯЕМ ОБА ПОДРАЗДЕЛЕНИЯ ДЛЯ ФОРМЫ ПЕРЕВОДА
+            if (fieldName.includes('Текущее подразделение')) {
+              currentDepartment = fieldValue.toLowerCase();
+              console.log(`🎯 Found CURRENT Department: "${currentDepartment}"`);
+            }
+
+            if (fieldName.includes('Желаемое подразделение')) {
+              desiredDepartment = fieldValue.toLowerCase();
+              console.log(`🎯 Found DESIRED Department: "${desiredDepartment}"`);
             }
           } else if (field.value) {
             // Текстовое поле
@@ -228,90 +382,10 @@ function extractFormData(answersData, fieldMapping) {
   
   console.log('📋 Extracted formData:', formData);
   console.log('🎯 Department for roles:', department);
+  console.log('🏢 Current Department:', currentDepartment);
+  console.log('🎯 Desired Department:', desiredDepartment);
   console.log('🆔 Discord ID:', discordId);
-  return { formData, discordId, department };
-}
-
-// Функция для получения ролей по подразделению
-function getDepartmentRoles(formType, department) {
-  const config = FORM_CONFIGS[formType];
-  
-  console.log(`🔍 DEBUG getDepartmentRoles: formType=${formType}, department="${department}"`);
-  
-  if (formType === 'documents') {
-    console.log(`📝 Using default roles for documents`);
-    return config.defaultRoleIds || [];
-  }
-  
-  if (formType === 'dismissal' && department && config.departmentRoles) {
-    // Приводим department к нижнему регистру для поиска
-    const departmentLower = department.toLowerCase().trim();
-    console.log(`🔍 Searching for department: "${departmentLower}"`);
-    console.log(`🔍 Available department keys:`, Object.keys(config.departmentRoles));
-    
-    // Маппинг различных вариантов названий на ключи
-    const departmentMapping = {
-      // FPF варианты
-      'fpf': 'fpf',
-      'fp force': 'fpf',
-      'force protection force': 'fpf',
-      'force protection': 'fpf',
-      '9008960389129250': 'fpf', // если приходит числовой ID
-      
-      // SSF варианты
-      'ssf': 'ssf', 
-      'special security force': 'ssf',
-      'special security': 'ssf',
-      '1761143395395': 'ssf',
-      
-      // SOAR варианты
-      'soar': 'soar',
-      'special operations and response': 'soar',
-      'special operations': 'soar',
-      '1761143401382': 'soar',
-      
-      // MP варианты
-      'mp': 'mp',
-      'military police': 'mp',
-      'полиция': 'mp',
-      '1761143405371': 'mp',
-      
-      // MTA варианты
-      'mta': 'mta',
-      'military training academy': 'mta',
-      'training academy': 'mta',
-      '1761143410900': 'mta',
-      
-      // Academy варианты
-      'academy': 'academy',
-      'академия': 'academy',
-      '1761143419535': 'academy'
-    };
-    
-    // Ищем совпадение в маппинге
-    for (const [key, deptKey] of Object.entries(departmentMapping)) {
-      if (departmentLower === key.toLowerCase() || departmentLower.includes(key.toLowerCase())) {
-        console.log(`✅ Department match found: "${key}" -> ${deptKey}`);
-        const roles = config.departmentRoles[deptKey];
-        console.log(`🎯 Roles for ${deptKey}:`, roles);
-        return roles || config.defaultRoleIds;
-      }
-    }
-    
-    // Если не нашли в маппинге, пробуем прямые ключи
-    for (const [deptKey, roles] of Object.entries(config.departmentRoles)) {
-      if (departmentLower === deptKey.toLowerCase() || departmentLower.includes(deptKey.toLowerCase())) {
-        console.log(`✅ Direct department match: ${deptKey}`);
-        console.log(`🎯 Roles for ${deptKey}:`, roles);
-        return roles;
-      }
-    }
-    
-    console.log(`❌ No department match found for: "${departmentLower}"`);
-  }
-  
-  console.log(`⚙️ Using default roles:`, config.defaultRoleIds);
-  return config.defaultRoleIds || [];
+  return { formData, discordId, department, currentDepartment, desiredDepartment };
 }
 
 // Универсальный обработчик для всех форм
@@ -338,6 +412,8 @@ function createFormHandler(formType) {
       let formData = {};
       let discordId = null;
       let department = null;
+      let currentDepartment = null;
+      let desiredDepartment = null;
       
       // Обрабатываем СЛОЖНЫЙ формат Яндекс.Форм (с пустым ключом в params)
       if (req.body && req.body.params && req.body.params[""]) {
@@ -355,6 +431,8 @@ function createFormHandler(formType) {
             formData = extracted.formData;
             discordId = extracted.discordId;
             department = extracted.department;
+            currentDepartment = extracted.currentDepartment;
+            desiredDepartment = extracted.desiredDepartment;
           } else {
             console.log('❌ Unexpected answers data structure');
           }
@@ -377,6 +455,8 @@ function createFormHandler(formType) {
           formData = extracted.formData;
           discordId = extracted.discordId;
           department = extracted.department;
+          currentDepartment = extracted.currentDepartment;
+          desiredDepartment = extracted.desiredDepartment;
           
         } catch (parseError) {
           console.error('❌ JSON parsing error:', parseError.message);
@@ -389,6 +469,8 @@ function createFormHandler(formType) {
         formData = extracted.formData;
         discordId = extracted.discordId;
         department = extracted.department;
+        currentDepartment = extracted.currentDepartment;
+        desiredDepartment = extracted.desiredDepartment;
       } else {
         console.error('❌ Пустое тело запроса или неизвестный формат');
         formData = { '❌ Ошибка': 'Пустой запрос или неизвестный формат данных' };
@@ -397,6 +479,8 @@ function createFormHandler(formType) {
       // ОТЛАДКА ПОСЛЕ ИЗВЛЕЧЕНИЯ ДАННЫХ
       console.log('🎯 FINAL VALUES:');
       console.log('   - Department:', department);
+      console.log('   - Current Department:', currentDepartment);
+      console.log('   - Desired Department:', desiredDepartment);
       console.log('   - Discord ID:', discordId);
       console.log('   - Form Data keys:', Object.keys(formData));
 
@@ -466,7 +550,13 @@ function createFormHandler(formType) {
       }
 
       // Получаем роли для упоминания
-      const roleIds = getDepartmentRoles(formType, department);
+      let roleIds = [];
+      if (formType === 'razrperevod') {
+        roleIds = getDepartmentRoles(formType, department, currentDepartment, desiredDepartment);
+      } else {
+        roleIds = getDepartmentRoles(formType, department);
+      }
+      
       const roleMentions = roleIds.filter(roleId => roleId).map(roleId => `<@&${roleId}>`).join(' ');
 
       console.log(`👥 Final role mentions: ${roleMentions}`);
@@ -544,7 +634,7 @@ app.get('/', (req, res) => {
       dismissal: '/webhook/dismissal',
       gentoken: '/webhook/gentoken',
       voennik: '/webhook/voennik',
-      perevod_1: '/webhook/razrperevod',
+      razrperevod: '/webhook/razrperevod',
       legacy: '/webhook'
     },
     environment: {
@@ -552,7 +642,7 @@ app.get('/', (req, res) => {
       hasDismissalWebhook: !!process.env.DISCORD_WEBHOOK_DISMISSAL,
       hasGentokenWebhook: !!process.env.DISCORD_WEBHOOK_GENTOKEN,
       hasVoennikWebhook: !!process.env.DISCORD_WEBHOOK_VOENNIK,
-      hasPerevod_1Webhook: !!process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
+      hasRazrperevodWebhook: !!process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
     }
   });
 });
@@ -584,5 +674,5 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_GENTOKEN: ${process.env.DISCORD_WEBHOOK_GENTOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_VOENNIK: ${process.env.DISCORD_WEBHOOK_VOENNIK ? '✅ Настроен' : '❌ Отсутствует'}`);
-  console.log(`   - DISCORD_WEBHOOK_PEREVOD_1: ${process.env.DISCORD_WEBHOOK_RAZRPEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_RAZRPEREVOD: ${process.env.DISCORD_WEBHOOK_RAZRPEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
