@@ -1,4 +1,4 @@
-const express = require('express');
+    const express = require('express');
 const axios = require('axios');
 
 const app = express();
@@ -539,7 +539,7 @@ app.post('/webhook/documents', createFormHandler('documents'));
 app.post('/webhook/dismissal', createFormHandler('dismissal'));
 app.post('/webhook/gentoken', createFormHandler('gentoken'));
 app.post('/webhook/voennik', createFormHandler('voennik'));
-app.post('/webhook/perevod_1', createFormHandler('perevod_1'));
+app.post('/webhook/razrperevod', createFormHandler('razrperevod'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -552,7 +552,7 @@ app.get('/', (req, res) => {
       dismissal: '/webhook/dismissal',
       gentoken: '/webhook/gentoken',
       voennik: '/webhook/voennik',
-      perevod_1: '/webhook/perevod_1',
+      perevod_1: '/webhook/razrperevod',
       legacy: '/webhook'
     },
     environment: {
@@ -560,7 +560,7 @@ app.get('/', (req, res) => {
       hasDismissalWebhook: !!process.env.DISCORD_WEBHOOK_DISMISSAL,
       hasGentokenWebhook: !!process.env.DISCORD_WEBHOOK_GENTOKEN,
       hasVoennikWebhook: !!process.env.DISCORD_WEBHOOK_VOENNIK,
-      hasPerevod_1Webhook: !!process.env.DISCORD_WEBHOOK_PEREVOD_1,
+      hasPerevod_1Webhook: !!process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
     }
   });
 });
@@ -586,11 +586,11 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook для увольнений: http://localhost:${PORT}/webhook/dismissal`);
   console.log(`🔗 Webhook для генеральских жетонов: http://localhost:${PORT}/webhook/gentoken`);
   console.log(`🔗 Webhook военных билетов: http://localhost:${PORT}/webhook/voennik`);
-  console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/perevod_1`);
+  console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/razrperevod`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_GENTOKEN: ${process.env.DISCORD_WEBHOOK_GENTOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_VOENNIK: ${process.env.DISCORD_WEBHOOK_VOENNIK ? '✅ Настроен' : '❌ Отсутствует'}`);
-  console.log(`   - DISCORD_WEBHOOK_PEREVOD_1: ${process.env.DISCORD_WEBHOOK_PEREVOD_1 ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_PEREVOD_1: ${process.env.DISCORD_WEBHOOK_RAZRPEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
