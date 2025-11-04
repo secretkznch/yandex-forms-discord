@@ -92,7 +92,38 @@ const FORM_CONFIGS = {
       'answer_choices_9008961500375596': '📝 Причина подачи заявление',
       'answer_choices_9008961500770008': '📂 Активность'
     }
-  },  
+  },
+  // Разрешение на перевод
+  'dismissal': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_PEREVOD_1,
+    title: '📑 Разрешение на перевод',
+    username: 'Отдел кадров',
+    departmentFieldId: 'answer_choices_9008961512180258',
+    departmentRoles: {
+      'fpf': [process.env.DISCORD_ROLE_FPF_1],
+      'ssf': [process.env.DISCORD_ROLE_SSF_1],
+      'soar': [process.env.DISCORD_ROLE_SOAR_1],
+      'mp': [process.env.DISCORD_ROLE_MP_1],
+      'mta': [process.env.DISCORD_ROLE_MTA_1],
+    },
+    departmentFieldId: 'answer_choices_9008961518712384',
+    departmentRoles: {
+      'fpf': [process.env.DISCORD_ROLE_FPF_1],
+      'ssf': [process.env.DISCORD_ROLE_SSF_1],
+      'soar': [process.env.DISCORD_ROLE_SOAR_1],
+      'mp': [process.env.DISCORD_ROLE_MP_1],
+      'mta': [process.env.DISCORD_ROLE_MTA_1],
+    },
+    defaultRoleIds: [process.env.DISCORD_ROLE_DISMISSAL_1, process.env.DISCORD_ROLE_DISMISSAL_2],
+    fieldMapping: {
+      'answer_short_text_9008961503377904': '🔢 DiscordID',
+      'answer_short_text_9008961503405112': '👤 Имя и фамилия',
+      'answer_short_text_9008961503423628': '👨🏻‍✈️ Воинское звание',
+      'answer_choices_9008961512180258': '🏢 Текущее подразделение',
+      'answer_choices_9008961518712384': '🏢 Желаемое подразделение',
+      'answer_short_text_9008961512272368': '📋 Причина желания перевода'
+    }
+  },
 };
 
 // Улучшенная функция для извлечения значений из Яндекс.Форм
