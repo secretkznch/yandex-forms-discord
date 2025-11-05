@@ -43,7 +43,7 @@ const FORM_CONFIGS = {
   'dismissal': {
     webhookUrl: process.env.DISCORD_WEBHOOK_DISMISSAL,
     title: '🚪 Рапорт на увольнение',
-    username: 'Отдел кадров',
+    username: 'Отдел кадров Национальной гвардии',
     departmentFieldId: 'answer_choices_9008960389129240',
     departmentRoles: {
       'fpf': [process.env.DISCORD_ROLE_FPF_1],
@@ -97,7 +97,7 @@ const FORM_CONFIGS = {
   'razrperevod': {
     webhookUrl: process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
     title: '📑 Разрешение на перевод',
-    username: 'Отдел кадров',
+    username: 'Отдел кадров Национальной гвардии',
     departmentFields: {
       current: 'answer_choices_9008961512180258',    // Текущее подразделение
       desired: 'answer_choices_9008961518712384'     // Желаемое подразделение
@@ -119,6 +119,31 @@ const FORM_CONFIGS = {
       'answer_short_text_9008961512272368': '📋 Причина перевода'
     }
   },
+  // Заявка на перевод
+  'perevod': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_PEREVOD,
+    title: '🚪 Рапорт на увольнение',
+    username: 'Отдел кадров Национальной гвардии',
+    departmentFieldId: 'answer_choices_9008960389129240',
+    departmentRoles: {
+      'fpf': [process.env.DISCORD_ROLE_FPF_1],
+      'ssf': [process.env.DISCORD_ROLE_SSF_1],
+      'soar': [process.env.DISCORD_ROLE_SOAR_1],
+      'mp': [process.env.DISCORD_ROLE_MP_1],
+      'mta': [process.env.DISCORD_ROLE_MTA_1],
+      'academy': [process.env.DISCORD_ROLE_ACADEMY_1]
+    },
+    defaultRoleIds: [process.env.DISCORD_ROLE_DISMISSAL_1, process.env.DISCORD_ROLE_DISMISSAL_2],
+    fieldMapping: {
+      'answer_short_text_9008961539964374': '🔢 DiscordID',
+      'answer_short_text_9008961539978550': '👤 Имя и фамилия',
+      'answer_choices_9008961541486928': '👨🏻‍✈️ Воинское звание',
+      'answer_choices_9008961541827248': '🏢 Текущее подразделение',
+      'answer_choices_9008961541889516': '🎯 Желаемое подразделение',
+      'answer_short_text_9008961541933532': '📂 Опыт в подразделении',
+      'answer_short_text_9008961541945446': '📋Разрешение на перевод'
+    }
+  },
 };
 
 // Вспомогательная функция для поиска ролей подразделения
@@ -132,6 +157,8 @@ function findDepartmentRoles(department, departmentRoles) {
     '9008960389129250': 'fpf',
     '9008961512180268': 'fpf',
     '9008961518712394': 'fpf',
+    '9008961541827258': 'fpf',
+    '9008961541889526': 'fpf',
     // SSF варианты
     'ssf': 'ssf', 
     'special security force': 'ssf',
@@ -139,6 +166,8 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143395395': 'ssf',
     '1762257457073': 'ssf',
     '1762263994604': 'ssf',
+    '1762287138434': 'ssf',
+    '1762287179768': 'ssf',
     
     // SOAR варианты
     'soar': 'soar',
@@ -147,6 +176,8 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143401382': 'soar',
     '1762257452943': 'soar',
     '1762263990062': 'soar',
+    '1762287141366': 'soar',
+    '1762287182810': 'soar',
     
     // MP варианты
     'mp': 'mp',
@@ -155,6 +186,8 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143405371': 'mp',
     '1762257448656': 'mp',
     '1762263986487': 'mp',
+    '1762287130468': 'mp',
+    '1762287176528': 'mp',
     
     // MTA варианты
     'mta': 'mta',
@@ -163,6 +196,8 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143410900': 'mta',
     '1762257460087': 'mta',
     '1762263997367': 'mta',
+    '1762287135236': 'mta',
+    '1762287171931': 'mta',
   };
   
   // Ищем совпадение в маппинге
@@ -631,6 +666,7 @@ app.post('/webhook/dismissal', createFormHandler('dismissal'));
 app.post('/webhook/gentoken', createFormHandler('gentoken'));
 app.post('/webhook/voennik', createFormHandler('voennik'));
 app.post('/webhook/razrperevod', createFormHandler('razrperevod'));
+app.post('/webhook/perevod', createFormHandler('perevod'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -644,6 +680,7 @@ app.get('/', (req, res) => {
       gentoken: '/webhook/gentoken',
       voennik: '/webhook/voennik',
       razrperevod: '/webhook/razrperevod',
+      perevod: '/webhook/perevod',
       legacy: '/webhook'
     },
     environment: {
@@ -652,6 +689,7 @@ app.get('/', (req, res) => {
       hasGentokenWebhook: !!process.env.DISCORD_WEBHOOK_GENTOKEN,
       hasVoennikWebhook: !!process.env.DISCORD_WEBHOOK_VOENNIK,
       hasRazrperevodWebhook: !!process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
+      hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_PEREVOD,
     }
   });
 });
@@ -678,10 +716,12 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook для генеральских жетонов: http://localhost:${PORT}/webhook/gentoken`);
   console.log(`🔗 Webhook военных билетов: http://localhost:${PORT}/webhook/voennik`);
   console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/razrperevod`);
+  console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/perevod`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_GENTOKEN: ${process.env.DISCORD_WEBHOOK_GENTOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_VOENNIK: ${process.env.DISCORD_WEBHOOK_VOENNIK ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_RAZRPEREVOD: ${process.env.DISCORD_WEBHOOK_RAZRPEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_PEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
