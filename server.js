@@ -146,6 +146,19 @@ const FORM_CONFIGS = {
       'answer_short_text_9008961541945446': '📋 Разрешение на перевод'
     }
   },
+  // Выдача военного билета
+  'bilet': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_BILET,
+    title: '📑 Выдан военный билет',
+    username: 'Отдел кадров Национальной гвардии',
+    fieldMapping: {
+      'answer_short_text_9008961597221770': '🔢 DiscordID',
+      'answer_short_text_9008961597291878': '👤 Имя и фамилия, выдавшего военный билет',
+      'answer_short_text_9008961598586870': '👤 Имя и Фамилия, получившего военный билет',
+      'answer_short_text_9008961598642832': '📝 Номер паспорта',
+      'answer_choices_9008961598674258': 'Причина выдачи',
+    }
+  },
 };
 
 // Вспомогательная функция для поиска ролей подразделения
@@ -685,6 +698,7 @@ app.post('/webhook/gentoken', createFormHandler('gentoken'));
 app.post('/webhook/voennik', createFormHandler('voennik'));
 app.post('/webhook/razrperevod', createFormHandler('razrperevod'));
 app.post('/webhook/perevod', createFormHandler('perevod'));
+app.post('/webhook/bilet', createFormHandler('bilet'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -699,6 +713,7 @@ app.get('/', (req, res) => {
       voennik: '/webhook/voennik',
       razrperevod: '/webhook/razrperevod',
       perevod: '/webhook/perevod',
+      bilet: '/webhook/bilet',
       legacy: '/webhook'
     },
     environment: {
@@ -708,6 +723,7 @@ app.get('/', (req, res) => {
       hasVoennikWebhook: !!process.env.DISCORD_WEBHOOK_VOENNIK,
       hasRazrperevodWebhook: !!process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
       hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_PEREVOD,
+      hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_BILET,
     }
   });
 });
@@ -735,6 +751,7 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook военных билетов: http://localhost:${PORT}/webhook/voennik`);
   console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/razrperevod`);
   console.log(`🔗 Webhook заявки на перевод: http://localhost:${PORT}/webhook/perevod`);
+  console.log(`🔗 Webhook заявки на перевод: http://localhost:${PORT}/webhook/bilet`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
@@ -742,4 +759,5 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_VOENNIK: ${process.env.DISCORD_WEBHOOK_VOENNIK ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_RAZRPEREVOD: ${process.env.DISCORD_WEBHOOK_RAZRPEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_PEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_BILET ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
