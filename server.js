@@ -131,7 +131,6 @@ const FORM_CONFIGS = {
       'soar': [process.env.DISCORD_ROLE_SOAR_1],
       'mp': [process.env.DISCORD_ROLE_MP_1],
       'mta': [process.env.DISCORD_ROLE_MTA_1],
-      'academy': [process.env.DISCORD_ROLE_ACADEMY_1]
     },
     defaultRoleIds: [process.env.DISCORD_ROLE_DISMISSAL_1, process.env.DISCORD_ROLE_DISMISSAL_2],
     fieldMapping: {
@@ -157,7 +156,6 @@ function findDepartmentRoles(department, departmentRoles) {
     '9008960389129250': 'fpf',
     '9008961512180268': 'fpf',
     '9008961518712394': 'fpf',
-    '9008961541827258': 'fpf',
     '9008961541889526': 'fpf',
     // SSF варианты
     'ssf': 'ssf', 
@@ -166,7 +164,6 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143395395': 'ssf',
     '1762257457073': 'ssf',
     '1762263994604': 'ssf',
-    '1762287138434': 'ssf',
     '1762287179768': 'ssf',
     
     // SOAR варианты
@@ -176,7 +173,6 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143401382': 'soar',
     '1762257452943': 'soar',
     '1762263990062': 'soar',
-    '1762287141366': 'soar',
     '1762287182810': 'soar',
     
     // MP варианты
@@ -186,7 +182,6 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143405371': 'mp',
     '1762257448656': 'mp',
     '1762263986487': 'mp',
-    '1762287130468': 'mp',
     '1762287176528': 'mp',
     
     // MTA варианты
@@ -196,7 +191,6 @@ function findDepartmentRoles(department, departmentRoles) {
     '1761143410900': 'mta',
     '1762257460087': 'mta',
     '1762263997367': 'mta',
-    '1762287135236': 'mta',
     '1762287171931': 'mta',
   };
   
