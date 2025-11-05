@@ -124,7 +124,7 @@ const FORM_CONFIGS = {
     webhookUrl: process.env.DISCORD_WEBHOOK_PEREVOD,
     title: '🚪 Рапорт на увольнение',
     username: 'Отдел кадров Национальной гвардии',
-    departmentFieldId: 'answer_choices_9008960389129240',
+    departmentFieldId: 'answer_choices_9008961541889516',
     departmentRoles: {
       'fpf': [process.env.DISCORD_ROLE_FPF_1],
       'ssf': [process.env.DISCORD_ROLE_SSF_1],
