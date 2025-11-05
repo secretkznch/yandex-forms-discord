@@ -122,16 +122,16 @@ const FORM_CONFIGS = {
   // Заявка на перевод
   'perevod': {
     webhookUrl: process.env.DISCORD_WEBHOOK_PEREVOD,
-    title: '🚪 Рапорт на увольнение',
+    title: '📑 Заявка на перевод',
     username: 'Отдел кадров Национальной гвардии',
-    departmentFieldId: 'answer_choices_9008961541889516',
+    departmentFieldId: 'answer_choices_9008961541889516', // Желаемое подразделение
     departmentRoles: {
       'fpf': [process.env.DISCORD_ROLE_FPF_1],
       'ssf': [process.env.DISCORD_ROLE_SSF_1],
       'soar': [process.env.DISCORD_ROLE_SOAR_1],
       'mp': [process.env.DISCORD_ROLE_MP_1],
       'mta': [process.env.DISCORD_ROLE_MTA_1],
-    },
+      },
     defaultRoleIds: [process.env.DISCORD_ROLE_DISMISSAL_1, process.env.DISCORD_ROLE_DISMISSAL_2],
     fieldMapping: {
       'answer_short_text_9008961539964374': '🔢 DiscordID',
@@ -140,9 +140,9 @@ const FORM_CONFIGS = {
       'answer_choices_9008961541827248': '🏢 Текущее подразделение',
       'answer_choices_9008961541889516': '🎯 Желаемое подразделение',
       'answer_short_text_9008961541933532': '📂 Опыт в подразделении',
-      'answer_short_text_9008961541945446': '📋Разрешение на перевод'
-    }
-  },
+      'answer_short_text_9008961541945446': '📋 Разрешение на перевод'
+      }
+},
 };
 
 // Вспомогательная функция для поиска ролей подразделения
@@ -223,40 +223,47 @@ function getDepartmentRoles(formType, department, currentDepartment = null, desi
   
   console.log(`🔍 DEBUG getDepartmentRoles: formType=${formType}, department="${department}", current="${currentDepartment}", desired="${desiredDepartment}"`);
   
-  // ОСОБАЯ ЛОГИКА ДЛЯ ФОРМЫ ПЕРЕВОДА: используем ОБА подразделения
-  if (formType === 'razrperevod' && config.departmentRoles) {
+// ОСОБАЯ ЛОГИКА ДЛЯ ФОРМ ПЕРЕВОДА
+  if ((formType === 'razrperevod' || formType === 'perevod') && config.departmentRoles) {
     const roles = [];
-    
-    // Добавляем роль текущего подразделения
-    if (currentDepartment) {
-      const currentDeptLower = currentDepartment.toLowerCase().trim();
-      console.log(`🔍 Searching for CURRENT department: "${currentDeptLower}"`);
-      
-      const currentRoles = findDepartmentRoles(currentDeptLower, config.departmentRoles);
-      if (currentRoles.length > 0) {
-        console.log(`✅ Added CURRENT department roles:`, currentRoles);
-        roles.push(...currentRoles);
+    // РАЗНАЯ ЛОГИКА ДЛЯ РАЗНЫХ ФОРМ
+    if (formType === 'razrperevod') {
+      // Для разрешения на перевод: оба подразделения
+      if (currentDepartment) {
+        const currentDeptLower = currentDepartment.toLowerCase().trim();
+        console.log(`🔍 Searching for CURRENT department: "${currentDeptLower}"`);
+        const currentRoles = findDepartmentRoles(currentDeptLower, config.departmentRoles);
+        if (currentRoles.length > 0) {
+          console.log(`✅ Added CURRENT department roles:`, currentRoles);
+          roles.push(...currentRoles);
+          }
+        }
+      if (desiredDepartment) {
+        const desiredDeptLower = desiredDepartment.toLowerCase().trim();
+        console.log(`🔍 Searching for DESIRED department: "${desiredDeptLower}"`);
+        const desiredRoles = findDepartmentRoles(desiredDeptLower, config.departmentRoles);
+        if (desiredRoles.length > 0) {
+          console.log(`✅ Added DESIRED department roles:`, desiredRoles);
+          roles.push(...desiredRoles);
+          }
+        }
+      } else if (formType === 'perevod') {
+      // Для заявки на перевод: ТОЛЬКО желаемое подразделение
+      if (desiredDepartment) {
+        const desiredDeptLower = desiredDepartment.toLowerCase().trim();
+        console.log(`🔍 Searching for DESIRED department only: "${desiredDeptLower}"`);
+        const desiredRoles = findDepartmentRoles(desiredDeptLower, config.departmentRoles);
+        if (desiredRoles.length > 0) {
+          console.log(`✅ Added ONLY DESIRED department roles:`, desiredRoles);
+          roles.push(...desiredRoles);
+          }
+        }
       }
-    }
-    
-    // Добавляем роль желаемого подразделения
-    if (desiredDepartment) {
-      const desiredDeptLower = desiredDepartment.toLowerCase().trim();
-      console.log(`🔍 Searching for DESIRED department: "${desiredDeptLower}"`);
-      
-      const desiredRoles = findDepartmentRoles(desiredDeptLower, config.departmentRoles);
-      if (desiredRoles.length > 0) {
-        console.log(`✅ Added DESIRED department roles:`, desiredRoles);
-        roles.push(...desiredRoles);
-      }
-    }
-    
     // Убираем дубликаты
     const uniqueRoles = [...new Set(roles)];
-    console.log(`🎯 Final unique roles for transfer:`, uniqueRoles);
-    
+    console.log(`🎯 Final unique roles:`, uniqueRoles);
     return uniqueRoles.length > 0 ? uniqueRoles : config.defaultRoleIds;
-  }
+    }
   
   // Старая логика для других форм
   if (formType === 'documents') {
