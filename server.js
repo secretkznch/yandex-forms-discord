@@ -637,13 +637,7 @@ function createFormHandler(formType) {
         timestamp: new Date().toISOString(),
         footer: { text: 'Разработчик @secretkznch' }
       };
-      if (embed.fields.length === 0) {
-        embed.fields.push({
-          name: '⚠️ Внимание',
-          value: 'Данные формы не распознаны',
-          inline: false
-          });
-        }
+  
       // Получаем роли для упоминания
       let roleIds = [];
       if (formType === 'razrperevod' || formType === 'perevod') {
