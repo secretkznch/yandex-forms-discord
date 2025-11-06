@@ -169,7 +169,7 @@ const FORM_CONFIGS = {
       process.env.DISCORD_ROLE_MTAINST
       ],
     fieldMapping: {
-      'answer_short_text_9008961672753734': '🤓 Экзаменуемый',
+      'answer_short_text_9008961672753734': '🔢 Discord ID',
       'answer_choices_9008961672772392': '📖 Требуется',
     }
   },    
