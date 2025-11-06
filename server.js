@@ -172,6 +172,18 @@ const FORM_CONFIGS = {
       'answer_short_text_9008961672753734': '🔢 DiscordID',
       'answer_choices_9008961672772392': '📖 Требуется',
     }
+  },
+  // Новая форма с числами
+  'atoken': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_NUMBERS,
+    title: '📊 Новая заявка',
+    username: 'Национальная гвардия',
+    defaultRoleIds: [process.env.DISCORD_ROLE_DOCUMENTS_2],
+    fieldMapping: {
+      'answer_short_text_XXXXXXXXXXXXXX': '🔢 DiscordID',
+      'answer_short_text_XXXXXXXXXXXXXX': '👤 Имя и Фамилия', 
+      'answer_short_text_XXXXXXXXXXXXXX': '🔢 Число'
+    }
   },    
 };
 
@@ -610,6 +622,7 @@ function createFormHandler(formType) {
           }
         }
       }
+
       // КРАСИВЫЙ ФОРМАТ С АБЗАЦАМИ ДЛЯ ВСЕХ ФОРМ
       let description = '';
       for (const [key, value] of Object.entries(formData)) {
@@ -630,13 +643,51 @@ function createFormHandler(formType) {
       if (description === '') {
         description = '⚠️ Данные формы не распознаны';
         }
+
+      // ОСОБАЯ ОБРАБОТКА ДЛЯ ФОРМЫ С ЧИСЛАМИ
+      let additionalField = null;
+      if (formType === 'numbers') {
+        const nameField = formData['👤 Имя и Фамилия'];
+        const numberField = formData['📝 Номер паспорта'];
+        
+        if (nameField && numberField) {
+          // Извлекаем инициалы
+          const nameParts = nameField.split(/[\s_]+/);
+          let initials = '';
+          
+          if (nameParts.length >= 2) {
+            const firstName = nameParts[0];
+            const lastName = nameParts[1];
+            initials = `${firstName.charAt(0).toUpperCase()}. ${lastName.charAt(0).toUpperCase()}.`;
+          } else if (nameParts.length === 1) {
+            initials = `${nameParts[0].charAt(0).toUpperCase()}.`;
+          }
+          
+          // Берем число как есть
+          const number = numberField.trim();
+          
+          // Создаем дополнительное поле
+          additionalField = {
+            name: '🎫 Полученный жетон',
+            value: `[SANG | A | ${number} | ${initials}]`,
+            inline: false
+          };
+        }
+      }
+
       const embed = {
         title: config.title,
-        description: description.substring(0, 4096), // Лимит Discord для description
+        description: description.substring(0, 4096),
         color: formType === 'dismissal' ? 0xFF0000 : 0x00FF00,
+        fields: [],
         timestamp: new Date().toISOString(),
         footer: { text: 'Разработчик @secretkznch' }
       };
+
+      // Добавляем дополнительное поле если есть
+      if (additionalField) {
+        embed.fields.push(additionalField);
+      }
   
       // Получаем роли для упоминания
       let roleIds = [];
@@ -714,6 +765,7 @@ app.post('/webhook/razrperevod', createFormHandler('razrperevod'));
 app.post('/webhook/perevod', createFormHandler('perevod'));
 app.post('/webhook/bilet', createFormHandler('bilet'));
 app.post('/webhook/academyexam', createFormHandler('academyexam'));
+app.post('/webhook/atoken', createFormHandler('atoken'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -730,6 +782,7 @@ app.get('/', (req, res) => {
       perevod: '/webhook/perevod',
       bilet: '/webhook/bilet',
       academyexam: '/webhook/academyexam',
+      atoken: '/webhook/atoken',
       legacy: '/webhook'
     },
     environment: {
@@ -741,6 +794,7 @@ app.get('/', (req, res) => {
       hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_PEREVOD,
       hasBiletWebhook: !!process.env.DISCORD_WEBHOOK_BILET,
       hasAcademyexamWebhook: !!process.env.DISCORD_WEBHOOK_ACADEMYEXAM,
+      hasNumbersWebhook: !!process.env.DISCORD_WEBHOOK_ATOKEN,
     }
   });
 });
@@ -769,7 +823,8 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/razrperevod`);
   console.log(`🔗 Webhook заявки на перевод: http://localhost:${PORT}/webhook/perevod`);
   console.log(`🔗 Webhook отчета выдачи военного билета: http://localhost:${PORT}/webhook/bilet`);
-  console.log('🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam');
+  console.log(`🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam`);
+  console.log(`🔗 Webhook формы с числами: http://localhost:${PORT}/webhook/atoken`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
@@ -779,4 +834,5 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_PEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_BILET: ${process.env.DISCORD_WEBHOOK_BILET ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_ACADEMYEXAM: ${process.env.DISCORD_WEBHOOK_ACADEMYEXAM ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_NUMBERS: ${process.env.DISCORD_WEBHOOK_NUMBERS ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
