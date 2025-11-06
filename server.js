@@ -610,41 +610,40 @@ function createFormHandler(formType) {
           }
         }
       }
-
-      // Создаем Discord embed
-      const embed = {
-        title: config.title,
-        color: formType === 'dismissal' ? 0xFF0000 : 0x00FF00,
-        fields: [],
-        timestamp: new Date().toISOString(),
-        footer: { text: 'Разработчик @secretkznch' }
-      };
-
-      // Добавляем поля
+      // КРАСИВЫЙ ФОРМАТ С АБЗАЦАМИ ДЛЯ ВСЕХ ФОРМ
+      let description = '';
       for (const [key, value] of Object.entries(formData)) {
         if (value && value !== '') {
           let displayValue = String(value);
-          
+          // Форматируем значение: заменяем запятые на переносы строк
+          displayValue = displayValue
+            .replace(/, /g, '\n') // Заменяем ", " на перенос строки
+            .replace(/,/g, '\n'); // Заменяем "," на перенос строки
           if (key.includes('DiscordID') && discordId) {
             displayValue = `<@${discordId}>`;
+            }
+          // Добавляем каждое поле как отдельный абзац
+          description += `**${key}**\n${displayValue}\n\n`;
           }
-          
-          embed.fields.push({
-            name: key,
-            value: displayValue.substring(0, 1024),
-            inline: key.length < 20
-          });
         }
-      }
-
+      // Если данные пустые, показываем сообщение об ошибке
+      if (description === '') {
+        description = '⚠️ Данные формы не распознаны';
+        }
+      const embed = {
+        title: config.title,
+        description: description.substring(0, 4096), // Лимит Discord для description
+        color: formType === 'dismissal' ? 0xFF0000 : 0x00FF00,
+        timestamp: new Date().toISOString(),
+        footer: { text: 'Разработчик @secretkznch' }
+      };
       if (embed.fields.length === 0) {
         embed.fields.push({
           name: '⚠️ Внимание',
           value: 'Данные формы не распознаны',
           inline: false
-        });
-      }
-
+          });
+        }
       // Получаем роли для упоминания
       let roleIds = [];
       if (formType === 'razrperevod' || formType === 'perevod') {
