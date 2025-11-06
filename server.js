@@ -166,10 +166,10 @@ const FORM_CONFIGS = {
     username: 'Академия Национальной гвардии Сан-Андреас',
     defaultRoleIds: [
       process.env.DISCORD_ROLE_DOCUMENTS_2,
-      process.env.DISCORD_ROLE_MTAINST
+      '1235695927335977020' 
     ],
     fieldMapping: {
-      'answer_short_text_9008961672753734': '🔢 Discord ID',
+      'answer_short_text_9008961672753734': '🔢 DiscordID',
       'answer_choices_9008961672772392': '📖 Требуется',
     }
   },    
