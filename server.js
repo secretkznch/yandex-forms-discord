@@ -175,7 +175,7 @@ const FORM_CONFIGS = {
   },
   // Жетоны академии
   'atoken': {
-    webhookUrl: process.env.DISCORD_WEBHOOK_NUMBERS,
+    webhookUrl: process.env.DISCORD_WEBHOOK_ATOKEN,
     title: '📊 Новая заявка',
     username: 'Национальная гвардия',
     defaultRoleIds: [process.env.DISCORD_ROLE_DOCUMENTS_2],
