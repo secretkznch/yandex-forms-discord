@@ -173,7 +173,7 @@ const FORM_CONFIGS = {
       'answer_choices_9008961672772392': '📖 Требуется',
     }
   },
-  // Новая форма с числами
+  // Жетоны академии
   'atoken': {
     webhookUrl: process.env.DISCORD_WEBHOOK_NUMBERS,
     title: '📊 Новая заявка',
@@ -182,7 +182,7 @@ const FORM_CONFIGS = {
     fieldMapping: {
       'answer_short_text_XXXXXXXXXXXXXX': '🔢 DiscordID',
       'answer_short_text_XXXXXXXXXXXXXX': '👤 Имя и Фамилия', 
-      'answer_short_text_XXXXXXXXXXXXXX': '🔢 Число'
+      'answer_short_text_XXXXXXXXXXXXXX': '📝 Номер паспорта'
     }
   },    
 };
@@ -794,7 +794,7 @@ app.get('/', (req, res) => {
       hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_PEREVOD,
       hasBiletWebhook: !!process.env.DISCORD_WEBHOOK_BILET,
       hasAcademyexamWebhook: !!process.env.DISCORD_WEBHOOK_ACADEMYEXAM,
-      hasNumbersWebhook: !!process.env.DISCORD_WEBHOOK_ATOKEN,
+      hasAtokenWebhook: !!process.env.DISCORD_WEBHOOK_ATOKEN,
     }
   });
 });
@@ -834,5 +834,5 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_PEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_BILET: ${process.env.DISCORD_WEBHOOK_BILET ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_ACADEMYEXAM: ${process.env.DISCORD_WEBHOOK_ACADEMYEXAM ? '✅ Настроен' : '❌ Отсутствует'}`);
-  console.log(`   - DISCORD_WEBHOOK_NUMBERS: ${process.env.DISCORD_WEBHOOK_NUMBERS ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_ATOKEN: ${process.env.DISCORD_WEBHOOK_ATOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
