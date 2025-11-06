@@ -669,7 +669,7 @@ function createFormHandler(formType) {
           // Создаем дополнительное поле
           additionalField = {
             name: '🎫 Полученный жетон',
-            value: `[SANG | A | ${number} | ${initials}]`,
+            value: `[SANG | A | №${number} | ${initials}]`,
             inline: false
           };
         }
