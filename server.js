@@ -167,7 +167,7 @@ const FORM_CONFIGS = {
     defaultRoleIds: [
       process.env.DISCORD_ROLE_DOCUMENTS_2,
       process.env.DISCORD_ROLE_MTAINST
-      ],
+    ],
     fieldMapping: {
       'answer_short_text_9008961672753734': '🔢 Discord ID',
       'answer_choices_9008961672772392': '📖 Требуется',
@@ -301,6 +301,13 @@ function getDepartmentRoles(formType, department, currentDepartment = null, desi
     
     return uniqueRoles.length > 0 ? uniqueRoles : config.defaultRoleIds;
   }
+
+  // ПРОВЕРКА ДЛЯ ФОРМЫ ЗАПИСИ НА ЭКЗАМЕН
+  if (formType === 'academyexam') {
+    console.log('🎓 Using academy exam roles');
+    return config.defaultRoleIds || [];
+  }
+    
   
   // Старая логика для других форм
   if (formType === 'documents') {
