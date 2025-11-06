@@ -646,7 +646,7 @@ function createFormHandler(formType) {
 
       // ОСОБАЯ ОБРАБОТКА ДЛЯ ФОРМЫ С ЧИСЛАМИ
       let additionalField = null;
-      if (formType === 'numbers') {
+      if (formType === 'atoken') {
         const nameField = formData['👤 Имя и Фамилия'];
         const numberField = formData['📝 Номер паспорта'];
         
@@ -824,7 +824,7 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook заявки на перевод: http://localhost:${PORT}/webhook/perevod`);
   console.log(`🔗 Webhook отчета выдачи военного билета: http://localhost:${PORT}/webhook/bilet`);
   console.log(`🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam`);
-  console.log(`🔗 Webhook формы с числами: http://localhost:${PORT}/webhook/atoken`);
+  console.log(`🔗 Webhook формы для жетонов академии: http://localhost:${PORT}/webhook/atoken`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
