@@ -159,6 +159,20 @@ const FORM_CONFIGS = {
       'answer_choices_9008961598674258': 'Причина выдачи',
     }
   },
+  // Запись на экзамен MTA
+  'academyexam': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_ACADEMYEXAM,
+    title: '🎓 Запись на экзамен',
+    username: 'Академия Национальной гвардии Сан-Андреас',
+    defaultRoleIds: [
+      process.env.DISCORD_ROLE_DOCUMENTS_2,
+      process.env.DISCORD_ROLE_MTAINST
+      ],
+    fieldMapping: {
+      'answer_short_text_9008961672753734': '🤓 Экзаменуемый',
+      'answer_choices_9008961672772392': '📖 Требуется',
+    }
+  },    
 };
 
 // Вспомогательная функция для поиска ролей подразделения
@@ -699,6 +713,7 @@ app.post('/webhook/voennik', createFormHandler('voennik'));
 app.post('/webhook/razrperevod', createFormHandler('razrperevod'));
 app.post('/webhook/perevod', createFormHandler('perevod'));
 app.post('/webhook/bilet', createFormHandler('bilet'));
+app.post('/webhook/academyexam', createFormHandler('academyexam'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -714,6 +729,7 @@ app.get('/', (req, res) => {
       razrperevod: '/webhook/razrperevod',
       perevod: '/webhook/perevod',
       bilet: '/webhook/bilet',
+      academyexam: '/webhook/academyexam',
       legacy: '/webhook'
     },
     environment: {
@@ -723,7 +739,8 @@ app.get('/', (req, res) => {
       hasVoennikWebhook: !!process.env.DISCORD_WEBHOOK_VOENNIK,
       hasRazrperevodWebhook: !!process.env.DISCORD_WEBHOOK_RAZRPEREVOD,
       hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_PEREVOD,
-      hasPerevodWebhook: !!process.env.DISCORD_WEBHOOK_BILET,
+      hasBiletWebhook: !!process.env.DISCORD_WEBHOOK_BILET,
+      hasAcademyexamWebhook: !!process.env.DISCORD_WEBHOOK_ACADEMYEXAM,
     }
   });
 });
@@ -751,7 +768,8 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook военных билетов: http://localhost:${PORT}/webhook/voennik`);
   console.log(`🔗 Webhook разрешения на перевод: http://localhost:${PORT}/webhook/razrperevod`);
   console.log(`🔗 Webhook заявки на перевод: http://localhost:${PORT}/webhook/perevod`);
-  console.log(`🔗 Webhook заявки на перевод: http://localhost:${PORT}/webhook/bilet`);
+  console.log(`🔗 Webhook отчета выдачи военного билета: http://localhost:${PORT}/webhook/bilet`);
+  console.log('🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam');
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
@@ -759,5 +777,6 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_VOENNIK: ${process.env.DISCORD_WEBHOOK_VOENNIK ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_RAZRPEREVOD: ${process.env.DISCORD_WEBHOOK_RAZRPEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_PEREVOD ? '✅ Настроен' : '❌ Отсутствует'}`);
-  console.log(`   - DISCORD_WEBHOOK_PEREVOD: ${process.env.DISCORD_WEBHOOK_BILET ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_BILET: ${process.env.DISCORD_WEBHOOK_BILET ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_ACADEMYEXAM: ${process.env.DISCORD_WEBHOOK_ACADEMYEXAM ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
