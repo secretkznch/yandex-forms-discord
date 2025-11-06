@@ -180,9 +180,9 @@ const FORM_CONFIGS = {
     username: 'Национальная гвардия',
     defaultRoleIds: [process.env.DISCORD_ROLE_DOCUMENTS_2],
     fieldMapping: {
-      'answer_short_text_XXXXXXXXXXXXXX': '🔢 DiscordID',
-      'answer_short_text_XXXXXXXXXXXXXX': '👤 Имя и Фамилия', 
-      'answer_short_text_XXXXXXXXXXXXXX': '📝 Номер паспорта'
+      'answer_short_text_9008961711641120': '🔢 DiscordID',
+      'answer_short_text_9008961711658784': '👤 Имя и Фамилия', 
+      'answer_short_text_9008961711668824': '📝 Номер паспорта'
     }
   },    
 };
