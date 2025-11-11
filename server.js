@@ -184,7 +184,22 @@ const FORM_CONFIGS = {
       'answer_short_text_9008961711658784': '👤 Имя и Фамилия', 
       'answer_short_text_9008961711668824': '📝 Номер паспорта'
     }
-  },    
+  },
+  // Отчет на повышение академии
+  'otchetacademy': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_OTCHETACADEMY,
+    titleL: '📝 Отчет на повышение',
+    username: 'Академия Национальной гвардии Сан-Андреас',
+    defaultRoleIds: [
+      process.env.DISCORD_ROLE_DOCUMENTS_2,
+    ],
+    fieldMapping: {
+      'answer_short_text_9008961714245960': '🔢 DiscordID',
+      'answer_short_text_9008961714252156': '👤 Имя и Фамилия',
+      'answer_one_answer_9008961714275526': '👨🏻‍✈️ Ранг',
+      'answer_short_text_9008961714494076': '📂 Проделланная работа',
+    }
+  },
 };
 
 // Вспомогательная функция для поиска ролей подразделения
@@ -681,7 +696,7 @@ function createFormHandler(formType) {
         color: formType === 'dismissal' ? 0xFF0000 : 0x00FF00,
         fields: [],
         timestamp: new Date().toISOString(),
-        footer: { text: 'Разработчик @secretkznch' }
+        footer: { text: 'Разработчик @secretkznch | Akira Esser' }
       };
 
       // Добавляем дополнительное поле если есть
@@ -766,13 +781,14 @@ app.post('/webhook/perevod', createFormHandler('perevod'));
 app.post('/webhook/bilet', createFormHandler('bilet'));
 app.post('/webhook/academyexam', createFormHandler('academyexam'));
 app.post('/webhook/atoken', createFormHandler('atoken'));
+app.post('/webhook/otchetacademy', createFormHandler('otchetacademy'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
 app.get('/', (req, res) => {
   res.json({ 
     status: 'OK 👍', 
-    service: 'Разработчик @secretkznch',
+    service: 'Разработчик @secretkznch | Akira Esser',
     endpoints: {
       documents: '/webhook/documents',
       dismissal: '/webhook/dismissal',
@@ -783,6 +799,7 @@ app.get('/', (req, res) => {
       bilet: '/webhook/bilet',
       academyexam: '/webhook/academyexam',
       atoken: '/webhook/atoken',
+      otchetacademy: '/webhook/otchetaccademy,
       legacy: '/webhook'
     },
     environment: {
@@ -795,6 +812,7 @@ app.get('/', (req, res) => {
       hasBiletWebhook: !!process.env.DISCORD_WEBHOOK_BILET,
       hasAcademyexamWebhook: !!process.env.DISCORD_WEBHOOK_ACADEMYEXAM,
       hasAtokenWebhook: !!process.env.DISCORD_WEBHOOK_ATOKEN,
+      hasOtchetacademyWebhook: !!process.env.DISCORD_WEBHOOK_OTCHETACADEMY,
     }
   });
 });
@@ -825,6 +843,7 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook отчета выдачи военного билета: http://localhost:${PORT}/webhook/bilet`);
   console.log(`🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam`);
   console.log(`🔗 Webhook формы для жетонов академии: http://localhost:${PORT}/webhook/atoken`);
+  console.log(`🔗 Webhook формы для отчетов академии: http://localhost:${PORT}/webhook/otchetacademy`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
@@ -835,4 +854,5 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_BILET: ${process.env.DISCORD_WEBHOOK_BILET ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_ACADEMYEXAM: ${process.env.DISCORD_WEBHOOK_ACADEMYEXAM ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_ATOKEN: ${process.env.DISCORD_WEBHOOK_ATOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_OTCHETACADEMY: ${process.env.DISCORD_WEBHOOK_OTCHETACADEMY ? '✅ Настроен' : '❌ Отсутствует'}`);  
 });
