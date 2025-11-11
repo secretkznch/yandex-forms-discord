@@ -799,7 +799,7 @@ app.get('/', (req, res) => {
       bilet: '/webhook/bilet',
       academyexam: '/webhook/academyexam',
       atoken: '/webhook/atoken',
-      otchetacademy: '/webhook/otchetacademy', // ИСПРАВЛЕНО: закрытая кавычка
+      otchetacademy: '/webhook/otchetacademy',
       legacy: '/webhook'
     },
     environment: {
@@ -843,7 +843,7 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook отчета выдачи военного билета: http://localhost:${PORT}/webhook/bilet`);
   console.log(`🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam`);
   console.log(`🔗 Webhook формы для жетонов академии: http://localhost:${PORT}/webhook/atoken`);
-  console.log(`🔗 Webhook формы для отчетов академии: http://localhost:${PORT}/webhook/otchetacademy`); // ИСПРАВЛЕНО: правильная шаблонная строка
+  console.log(`🔗 Webhook формы для отчетов академии: http://localhost:${PORT}/webhook/otchetacademy`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
