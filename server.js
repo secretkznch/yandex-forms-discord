@@ -176,7 +176,7 @@ const FORM_CONFIGS = {
   // Жетоны академии
   'atoken': {
     webhookUrl: process.env.DISCORD_WEBHOOK_ATOKEN,
-    title: '📊 Новая заявка',
+    title: '📊 Новый жетон',
     username: 'Национальная гвардия',
     defaultRoleIds: [process.env.DISCORD_ROLE_DOCUMENTS_2],
     fieldMapping: {
@@ -203,15 +203,27 @@ const FORM_CONFIGS = {
   // Жетоны FPF
   'fpftoken': {
     webhookUrl: process.env.DISCORD_WEBHOOK_FPFTOKEN,
-    title: '📊 Новый жетон',
+    title: '📊 Новый жетон FPF',
     username: 'Национальная гвардия',
-    defaultRoleIds: [process.env.DISCORD_ROLE_FPF], // Роль FPF для упоминания
+    defaultRoleIds: [], // Пустой массив, если трубется добавить упоминание, то нужно добавить
     fieldMapping: {
-      'answer_short_text_9008961711641120': '🔢 DiscordID', // Замените на реальные ID полей
+      'answer_short_text_9008961711641120': '🔢 DiscordID',
       'answer_short_text_9008961711658784': '👤 Имя и Фамилия', 
       'answer_short_text_9008961711668824': '📝 Номер паспорта'
-  }
-},
+    }
+  },
+  // Жетоны MTA
+  'mtatoken': {
+    webhookUrl: process.env.DISCORD_WEBHOOK_MTATOKEN,
+    title: '📊 Новая жетон MTA',
+    username: 'Национальная гвардия',
+    defaultRoleIds: [],
+    fieldMapping: {
+      'answer_short_text_9008961711641120': '🔢 DiscordID',
+      'answer_short_text_9008961711658784': '👤 Имя и Фамилия', 
+      'answer_short_text_9008961711668824': '📝 Номер паспорта'
+    }
+  },
 };
 
 // Вспомогательная функция для поиска ролей подразделения
@@ -726,6 +738,31 @@ function createFormHandler(formType) {
             };
           }
         }
+      // Обработка для жетонов MTA (mtatoken)
+      if (formType === 'mtatoken') {
+        const nameField = formData['👤 Имя и Фамилия'];
+        const numberField = formData['📝 Номер паспорта'];
+        if (nameField && numberField) { // Извлекаем инициалы
+          const nameParts = nameField.split(/[\s_]+/);
+          let initials = '';
+          
+          if (nameParts.length >= 2) {
+            const firstName = nameParts[0];
+            const lastName = nameParts[1];
+            initials = `${firstName.charAt(0).toUpperCase()}. ${lastName.charAt(0).toUpperCase()}.`;
+            } else if (nameParts.length === 1) {
+            initials = `${nameParts[0].charAt(0).toUpperCase()}.`;
+            }
+            // Берем число как есть
+            const number = numberField.trim();
+            // Создаем дополнительное поле для FPF
+            additionalField = {
+              name: '🎫 Полученный жетон MTA',
+              value: `[ARMY | MTA | №${number} | ${initials}]`,
+              inline: false
+            };
+          }
+        }
 
       const embed = {
         title: config.title,
@@ -820,6 +857,7 @@ app.post('/webhook/academyexam', createFormHandler('academyexam'));
 app.post('/webhook/atoken', createFormHandler('atoken'));
 app.post('/webhook/otchetacademy', createFormHandler('otchetacademy'));
 app.post('/webhook/fpftoken', createFormHandler('fpftoken'));
+app.post('/webhook/mtatoken', createFormHandler('mtatoken'));
 app.post('/webhook', createFormHandler('documents')); // для обратной совместимости
 
 // Страница проверки работы
@@ -839,6 +877,7 @@ app.get('/', (req, res) => {
       atoken: '/webhook/atoken',
       otchetacademy: '/webhook/otchetacademy',
       fpftoken: '/webhook/fpftoken',
+      mtatoken: '/webhook/mtatoken',
       legacy: '/webhook'
     },
     environment: {
@@ -853,6 +892,7 @@ app.get('/', (req, res) => {
       hasAtokenWebhook: !!process.env.DISCORD_WEBHOOK_ATOKEN,
       hasOtchetacademyWebhook: !!process.env.DISCORD_WEBHOOK_OTCHETACADEMY,
       hasFpftokenWebhook: !!process.end.DISCORD_WEBHOOK_FPFTOKEN,
+      hasMtatokenWebhook: !!process.env.DISCORD_WEBHOOK_FPFTOKEN,
     }
   });
 });
@@ -885,6 +925,7 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook формы для жетонов академии: http://localhost:${PORT}/webhook/atoken`);
   console.log(`🔗 Webhook формы для отчетов академии: http://localhost:${PORT}/webhook/otchetacademy`);
   console.log(`🔗 Webhook формы для жетонов fpf: http://localhost:${PORT}/webhook/fpftoken`);
+  console.log(`🔗 Webhook формы для жетонов mta: http://localhost:${PORT}/webhook/mtatoken`);
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
@@ -897,4 +938,5 @@ app.listen(PORT, () => {
   console.log(`   - DISCORD_WEBHOOK_ATOKEN: ${process.env.DISCORD_WEBHOOK_ATOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_OTCHETACADEMY: ${process.env.DISCORD_WEBHOOK_OTCHETACADEMY ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_FPFTOKEN: ${process.env.DISCORD_WEBHOOK_FPFTOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
+  console.log(`   - DISCORD_WEBHOOK_MTATOKEN: ${process.env.DISCORD_WEBHOOK_MTATOKEN ? '✅ Настроен' : '❌ Отсутствует'}`);
 });
