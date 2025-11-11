@@ -188,7 +188,7 @@ const FORM_CONFIGS = {
   // Отчет на повышение академии
   'otchetacademy': {
     webhookUrl: process.env.DISCORD_WEBHOOK_OTCHETACADEMY,
-    titleL: '📝 Отчет на повышение',
+    title: '📝 Отчет на повышение',
     username: 'Академия Национальной гвардии Сан-Андреас',
     defaultRoleIds: [
       process.env.DISCORD_ROLE_DOCUMENTS_2,
@@ -843,7 +843,7 @@ app.listen(PORT, () => {
   console.log(`🔗 Webhook отчета выдачи военного билета: http://localhost:${PORT}/webhook/bilet`);
   console.log(`🔗 Webhook записи на экзамен для академии: http://localhost:${PORT}/webhook/academyexam`);
   console.log(`🔗 Webhook формы для жетонов академии: http://localhost:${PORT}/webhook/atoken`);
-  console.log(`🔗 Webhook формы для отчетов академии: http://localhost:${PORT}/webhook/otchetacademy`);
+  console.log('🔗 Webhook формы для отчетов академии: http://localhost:${PORT}/webhook/otchetacademy');
   console.log(`🔍 Проверка конфигурации:`);
   console.log(`   - DISCORD_WEBHOOK_DOCUMENTS: ${process.env.DISCORD_WEBHOOK_DOCUMENTS ? '✅ Настроен' : '❌ Отсутствует'}`);
   console.log(`   - DISCORD_WEBHOOK_DISMISSAL: ${process.env.DISCORD_WEBHOOK_DISMISSAL ? '✅ Настроен' : '❌ Отсутствует'}`);
