@@ -799,7 +799,7 @@ app.get('/', (req, res) => {
       bilet: '/webhook/bilet',
       academyexam: '/webhook/academyexam',
       atoken: '/webhook/atoken',
-      otchetacademy: '/webhook/otchetaccademy,
+      otchetacademy: '/webhook/otchetacademy,
       legacy: '/webhook'
     },
     environment: {
